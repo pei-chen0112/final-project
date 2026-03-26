@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>綠色校園無樁共享單車系統</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* ==================== 1. 基礎與共用樣式 ==================== */
+        body { font-family: "微軟正黑體", Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
+        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
+        .active-view { display: flex; }
+        .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
+        header { background-color: #4CAF50; color: white; padding: 15px 0; text-align: center; position: relative; flex-shrink: 0; }
+        header h1 { margin: 0; font-size: 22px; }
+        .back-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
+
+        .auth-container { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); justify-content: center; align-items: center; }
+        .card { background-color: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 350px; text-align: center; margin: 0 auto; }
+        .card h2 { color: #2e7d32; margin-top: 0; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; font-size: 14px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-green { background-color: #4CAF50; } .btn-green:hover { background-color: #388E3C; }
+        .btn-orange { background-color: #ff9800; } .btn-orange:hover { background-color: #e68a00; }
+        .btn-red { background-color: #F44336; } .btn-red:hover { background-color: #D32F2F; }
+        .link-text { margin-top: 15px; font-size: 14px; cursor: pointer; color: #4CAF50; font-weight: bold; text-decoration: underline; }
+
+        /* ==================== 2. 主選單與頁面內容 ==================== */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .menu-item { background: white; padding: 20px 10px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .menu-item:hover { border-color: #4CAF50; transform: translateY(-3px); }
+        .menu-item h3 { margin: 10px 0 0 0; color: #333; font-size: 16px; }
+        .menu-icon { font-size: 32px; }
+        
+        .page-content { padding: 30px; display: flex; flex-direction: column; align-items: center; }
+        .upload-box { background: #f9f9f9; border: 2px dashed #4CAF50; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; width: 100%; box-sizing: border-box; }
+
+        /* ==================== 3. 修理站技師專屬後台樣式 ==================== */
+        #adminSection header { background-color: #333; } 
+        .admin-panel { padding: 20px; width: 95%; max-width: 800px; margin: 0 auto; }
+        .admin-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #ff9800; }
+        .admin-card h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f4f4f9; }
+        .action-btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px;}
+        .btn-approve { background-color: #4CAF50; }
+        .btn-reject { background-color: #F44336; }
+
+        /* ==================== 4. 地圖與浮動面板樣式 ==================== */
+        #map { flex-grow: 1; width: 100%; z-index: 1; }
+        #rentVerifyPanel { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); z-index: 2000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #0072C6; }
+        #activeRidePanel { display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #4CAF50; }
+        .timer { font-size: 32px; font-weight: bold; color: #4CAF50; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 1. 登入頁面 ==================== -->
+    <section id="loginSection" class="view-section active-view auth-container">
+        <div class="card">
+            <h2>🚲 校園單車登入</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group"><label>學號 / 帳號</label><input type="text" id="loginId" placeholder="技師後台請輸入 admin" required></div>
+                <div class="input-group"><label>密碼</label><input type="password" id="loginPwd" placeholder="技師密碼 admin123" required></div>
+                <div id="loginError" style="color:red; display:none; font-size:13px; margin-bottom:10px;">帳密錯誤或未註冊</div>
+                <button type="submit" class="btn btn-green">登入系統</button>
+            </form>
+            <div class="link-text" onclick="switchView('registerSection')">還沒有帳號？前往註冊</div>
+        </div>
+    </section>
+
+    <!-- ==================== 2. 註冊頁面 ==================== -->
+    <section id="registerSection" class="view-section auth-container">
+        <div class="card">
+            <h2>📝 新增學生帳號</h2>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group"><label>設定學號</label><input type="text" id="regId" required></div>
+                <div class="input-group"><label>設定密碼</label><input type="password" id="regPwd" required></div>
+                <button type="submit" class="btn btn-orange">立即開通帳號</button>
+            </form>
+            <div class="link-text" onclick="switchView('loginSection')">返回登入</div>
+        </div>
+    </section>
+
+    <!-- ==================== 3. 主選單 ==================== -->
+    <section id="mainMenuSection" class="view-section">
+        <header>
+            <button class="back-btn" onclick="logout()">登出</button>
+            <h1>校園共享單車中心</h1>
+        </header>
+        <div class="menu-grid">
+            <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>我要借車</h3></div>
+            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">💳</div><h3>數位錢包</h3></div>
+            <div class="menu-item" onclick="enterInsurancePage()"><div class="menu-icon">🛡️</div><h3>保險專區</h3></div>
+            <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3>車輛報修</h3></div>
+        </div>
+    </section>
+
+    <!-- ==================== 4. 會員中心 (數位錢包 & O2O車輛提供) ==================== -->
+    <section id="memberSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>會員中心與錢包</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            
+            <!-- 數位錢包區塊 -->
+            <div id="walletDisplay" style="width: 100%;"></div>
+            
+            <!-- O2O 提供車輛區塊 -->
+            <div class="upload-box" style="margin-top: 30px;">
+                <h4 style="margin-top: 0; color: #2e7d32;">🚲 線上申請提供車輛</h4>
+                <p style="font-size: 13px; color: #555; line-height: 1.5;">
+                    牽至【校內修理站】安裝硬體。<br>技師上架後，系統自動回饋 <strong>$50 儲值金</strong>！
+                </p>
+                <button class="btn btn-green" onclick="submitBikeApproval()">送出線上申請單</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 5. 保險專區 ==================== -->
+    <section id="insuranceSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>🛡️ 騎乘保險中心</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="margin-top:0;">目前保險狀態</h3>
+            <div id="insuranceStatusDisplay" style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">讀取中...</div>
+
+            <p style="font-size: 12px; color: gray; text-align: left; margin-bottom: 15px;">使用數位錢包餘額加購以下方案：</p>
+
+            <div style="text-align: left; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 5px 0; color: #0072C6;">🛡️ 單次平安險 (24小時)</h4>
+                <p style="font-size: 13px; color: gray; margin: 0 0 10px 0;">保障騎乘期間意外傷害，最高理賠 100 萬。</p>
+                <button class="btn" style="background-color: #0072C6; padding: 8px; margin-top: 0;" onclick="buyInsurance('單次平安險', 5)">扣款 $5 立即投保</button>
+            </div>
+
+            <div style="text-align: left; border: 1px solid #ddd; padding: 15px; border-radius: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #2e7d32;">👑 月費通勤險 (30天)</h4>
+                <p style="font-size: 13px; color: gray; margin: 0 0 10px 0;">包含第三人責任險與個人傷害險，無限次保障。</p>
+                <button class="btn btn-green" style="padding: 8px; margin-top: 0;" onclick="buyInsurance('月費通勤險', 50)">扣款 $50 立即投保</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 6. 車輛報修 ==================== -->
+    <section id="repairSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>車輛報修</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
+            <div class="input-group"><label>故障車牌號碼</label><input type="text" id="repairBikeId" placeholder="例如: BIKE-001"></div>
+            <div class="input-group"><label>損壞狀況描述</label><input type="text" id="repairDesc" placeholder="例如: 煞車失靈"></div>
+            <button class="btn btn-orange" onclick="submitRepair()">通報修理站技師</button>
+        </div>
+    </section>
+
+    <!-- ==================== 7. 修理站技師專屬後台 ==================== -->
+    <section id="adminSection" class="view-section">
+        <header>
+            <button class="back-btn" onclick="logout()">登出</button>
+            <h1>👨‍🔧 腳踏車修理站 - 技師管理後台</h1>
+        </header>
+        <div class="admin-panel">
+            <div class="admin-card">
+                <h3>🚲 待安裝硬體申請單</h3>
+                <table><thead><tr><th>申請學生</th><th>申請時間</th><th>操作</th></tr></thead><tbody id="adminApprovalTable"></tbody></table>
+            </div>
+            <div class="admin-card" style="border-left-color: #F44336;">
+                <h3>🔧 待修復車輛清單</h3>
+                <table><thead><tr><th>報修車號</th><th>損壞描述</th><th>操作</th></tr></thead><tbody id="adminRepairTable"></tbody></table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 8. 借車地圖與面板 ==================== -->
+    <section id="mapSection" class="view-section" style="position: relative;">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 主選單</button><h1>地圖尋車</h1></header>
+        <div id="map"></div>
+
+        <div id="rentVerifyPanel">
+            <h3 style="color: #0072C6;">解鎖車輛</h3>
+            <p style="font-size: 13px; color: gray;">每次騎乘將扣除錢包餘額 <strong style="color:#0072C6;">$10</strong></p>
+            <div class="input-group"><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
+            
+            <div style="background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <span style="font-size: 12px; color: #2e7d32;">車機螢幕動態密碼：</span><br>
+                <strong style="font-size: 20px; letter-spacing: 2px;" id="simulatedBikeScreen">----</strong>
+            </div>
+
+            <div class="input-group"><input type="password" id="inputEPassword" placeholder="輸入電子密碼" required></div>
+            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()">數位錢包付款並解鎖</button>
+            <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()">取消</button>
+        </div>
+
+        <div id="activeRidePanel">
+            <h2>🚲 騎乘中：<span id="rentedBikeId"></span></h2>
+            <div class="timer" id="rideTimer">00:00</div>
+            <button class="btn btn-red" onclick="returnBike()">⏹️ 結束騎乘並 GPS 還車</button>
+        </div>
+    </section>
+
+    <!-- ==================== JavaScript 核心邏輯 ==================== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- 1. 虛擬資料庫與狀態 ---
+        let serverBikeDatabase = {
+            "BIKE-001": { lat: 24.96815, lng: 121.21942, pwd: "0000", status: "active" },
+            "BIKE-002": { lat: 24.96750, lng: 121.21850, pwd: "0000", status: "active" }
+        };
+        let repairQueue = [], approvalQueue = [], currentUser = ""; 
+        let validPromoCodes = { "SDGS-2024": { amount: 50, used: false }, "PROFESSOR-100": { amount: 100, used: false } };
+
+        // 10秒自動刷新密碼
+        setInterval(() => {
+            for (let bikeId in serverBikeDatabase) { serverBikeDatabase[bikeId].pwd = Math.floor(1000 + Math.random() * 9000).toString(); }
+            if(document.getElementById('rentVerifyPanel').style.display === 'block') {
+                document.getElementById('simulatedBikeScreen').innerText = serverBikeDatabase[document.getElementById('inputPlateNum').value].pwd;
+            }
+        }, 10000);
+
+        // --- 2. 登入與路由 ---
+        function switchView(targetId) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active-view'));
+            document.getElementById(targetId).classList.add('active-view');
+        }
+
+        function logout() {
+            currentUser = ""; document.getElementById('loginId').value = ""; document.getElementById('loginPwd').value = "";
+            switchView('loginSection');
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            localStorage.setItem('savedStudentId', document.getElementById('regId').value);
+            localStorage.setItem('savedPassword', document.getElementById('regPwd').value);
+            if (!localStorage.getItem('walletBalance')) localStorage.setItem('walletBalance', '0'); 
+            alert("✅ 註冊成功！請登入系統。"); switchView('loginSection');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const id = document.getElementById('loginId').value;
+            const pwd = document.getElementById('loginPwd').value;
+
+            if (id === 'admin' && pwd === 'admin123') {
+                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); return;
+            }
+
+            if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
+                currentUser = id; switchView('mainMenuSection');
+            } else { document.getElementById('loginError').style.display = 'block'; }
+        }
+
+        // --- 3. 數位錢包邏輯 ---
+        function enterMemberPage() { renderWallet(); switchView('memberSection'); }
+
+        function renderWallet() {
+            let balance = localStorage.getItem('walletBalance') || '0';
+            document.getElementById('walletDisplay').innerHTML = `
+                <div style="background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: left;">
+                    <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">NTUE Bike 數位錢包</h3>
+                    <div style="font-size: 36px; font-weight: bold; margin-bottom: 20px;">$ ${balance}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="margin-top:0; background-color: #00C300; font-size: 14px; padding: 10px;" onclick="openLinePayMock()">💬 LINE Pay 儲值</button>
+                        <button class="btn" style="margin-top:0; background-color: rgba(255,255,255,0.2); border: 1px solid white; font-size: 14px; padding: 10px;" onclick="redeemPromoCode()">🎁 序號兌換</button>
+                    </div>
+                </div>`;
+        }
+
+        function openLinePayMock() {
+            let amount = prompt("請輸入想透過 LINE Pay 儲值的金額 (例如: 50, 100)：");
+            if (!amount || isNaN(amount) || amount <= 0) return alert("❌ 請輸入有效的金額！");
+            alert(`🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)`);
+            setTimeout(() => {
+                if (confirm(`【LINE Pay 模擬畫面】\n是否確認支付 NT$ ${amount}？`)) {
+                    let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
+                    localStorage.setItem('walletBalance', (currentBalance + parseInt(amount)).toString());
+                    alert("✅ LINE Pay 交易成功！"); renderWallet();
+                } else { alert("❌ 交易已取消。"); }
+            }, 1500);
+        }
+
+        function redeemPromoCode() {
+            let code = prompt("請輸入您的點數儲值序號：");
+            if (!code) return;
+            code = code.toUpperCase();
+            if (validPromoCodes[code]) {
+                if (validPromoCodes[code].used) { alert("❌ 兌換失敗：此序號已被使用過了！"); } 
+                else {
+                    let bonus = validPromoCodes[code].amount;
+                    let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
+                    localStorage.setItem('walletBalance', (currentBalance + bonus).toString());
+                    validPromoCodes[code].used = true;
+                    alert(`🎉 兌換成功！獲得 ${bonus} 元儲值金！`); renderWallet();
+                }
+            } else { alert("❌ 兌換失敗：無效的序號！"); }
+        }
+
+        // --- 4. 保險專區邏輯 ---
+        function enterInsurancePage() {
+            let currentIns = localStorage.getItem('userInsurance');
+            let statusDiv = document.getElementById('insuranceStatusDisplay');
+            if (currentIns) { statusDiv.innerText = `✅ 已生效：${currentIns}`; statusDiv.style.color = '#4CAF50'; } 
+            else { statusDiv.innerText = '❌ 尚未投保任何險種'; statusDiv.style.color = '#F44336'; }
+            switchView('insuranceSection');
+        }
+
+        function buyInsurance(planName, cost) {
+            let balance = parseInt(localStorage.getItem('walletBalance') || '0');
+            if (balance < cost) return alert(`❌ 錢包餘額不足！需要 $${cost}，請先至會員中心儲值。`);
+            if (confirm(`【投保確認】\n確定花費 $${cost} 購買「${planName}」嗎？`)) {
+                localStorage.setItem('walletBalance', (balance - cost).toString());
+                localStorage.setItem('userInsurance', planName);
+                alert(`✅ 投保成功！保費已從錢包扣除。`); enterInsurancePage(); 
+            }
+        }
+
+        // --- 5. O2O 提供車輛與報修 (學生端) ---
+        function submitBikeApproval() {
+            approvalQueue.push({ id: Date.now(), studentId: currentUser, time: new Date().toLocaleTimeString() });
+            alert("✅ 申請已送出！請牽車至修理站安裝硬體。"); switchView('mainMenuSection');
+        }
+
+        function submitRepair() {
+            let bikeId = document.getElementById('repairBikeId').value;
+            let desc = document.getElementById('repairDesc').value;
+            if(!bikeId || !desc) return alert("請填寫完整資訊！");
+            if (serverBikeDatabase[bikeId]) {
+                serverBikeDatabase[bikeId].status = "maintenance";
+                if (bikeMarkers[bikeId]) { map.removeLayer(bikeMarkers[bikeId]); delete bikeMarkers[bikeId]; }
+            }
+            repairQueue.push({ bikeId: bikeId, desc: desc, time: new Date().toLocaleTimeString() });
+            alert("✅ 已通報並下線該車輛！請牽至修理站。"); switchView('mainMenuSection');
+        }
+
+        // --- 6. 修理站後台邏輯 ---
+        function renderAdminDashboard() {
+            let repairHtml = "";
+            if (repairQueue.length === 0) repairHtml = "<tr><td colspan='3' style='text-align:center; color:gray;'>無待修車輛</td></tr>";
+            repairQueue.forEach((item, i) => {
+                repairHtml += `<tr><td style="color:#F44336; font-weight:bold;">${item.bikeId}</td><td>${item.desc}</td>
+                <td><button class="action-btn btn-approve" onclick="resolveRepair(${i}, '${item.bikeId}')">修復上架</button></td></tr>`;
+            });
+            document.getElementById('adminRepairTable').innerHTML = repairHtml;
+
+            let approvalHtml = "";
+            if (approvalQueue.length === 0) approvalHtml = "<tr><td colspan='3' style='text-align:center; color:gray;'>無待安裝車輛</td></tr>";
+            approvalQueue.forEach((item, i) => {
+                approvalHtml += `<tr><td>${item.studentId}</td><td>${item.time}</td>
+                <td><button class="action-btn btn-approve" onclick="approveBike(${i}, '${item.studentId}')">安裝並上架 (發送獎勵)</button>
+                <button class="action-btn btn-reject" onclick="rejectBike(${i})">退回</button></td></tr>`;
+            });
+            document.getElementById('adminApprovalTable').innerHTML = approvalHtml;
+        }
+
+        function resolveRepair(index, bikeId) {
+            repairQueue.splice(index, 1);
+            if (serverBikeDatabase[bikeId]) {
+                serverBikeDatabase[bikeId].status = "active";
+                if (isMapInitialized) {
+                    let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+                    createBikeMarker(bikeId, serverBikeDatabase[bikeId].lat, serverBikeDatabase[bikeId].lng, icon);
+                }
+            }
+            alert(`✅ 車輛 ${bikeId} 已修復重新上架！`); renderAdminDashboard();
+        }
+
+        function approveBike(index, studentId) {
+            let newBikeId = "BIKE-00" + (Object.keys(serverBikeDatabase).length + 1);
+            let newLat = 24.968 + (Math.random() - 0.5) * 0.005, newLng = 121.219 + (Math.random() - 0.5) * 0.005;
+            serverBikeDatabase[newBikeId] = { lat: newLat, lng: newLng, pwd: "0000", status: "active" };
+            
+            // 系統發放 50 元獎勵給該學生
+            let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
+            localStorage.setItem('walletBalance', (currentBalance + 50).toString());
+
+            if(isMapInitialized) {
+                let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+                createBikeMarker(newBikeId, newLat, newLng, icon);
+            }
+            approvalQueue.splice(index, 1);
+            alert(`✅ 已核發車牌【${newBikeId}】。\n已自動匯入 $50 獎勵金至申請者錢包！`); renderAdminDashboard();
+        }
+        function rejectBike(index) { approvalQueue.splice(index, 1); alert("❌ 已退回。"); renderAdminDashboard(); }
+
+        // --- 7. 地圖與借車扣款邏輯 ---
+        let map, isMapInitialized = false, bikeMarkers = {};
+        let selectedBikeToRent = null, currentRentedBike = null, rideInterval = null, rideSeconds = 0;
+
+        function enterMap() {
+            switchView('mapSection');
+            if (!isMapInitialized) {
+                map = L.map('map').setView([24.968, 121.219], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40, 40], iconAnchor: [20, 40] });
+                for(let bikeId in serverBikeDatabase) { 
+                    if(serverBikeDatabase[bikeId].status === "active") createBikeMarker(bikeId, serverBikeDatabase[bikeId].lat, serverBikeDatabase[bikeId].lng, icon); 
+                }
+                isMapInitialized = true;
+            }
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        }
+
+        function createBikeMarker(id, lat, lng, iconDef) {
+            let marker = L.marker([lat, lng], {icon: iconDef}).addTo(map);
+            marker.on('click', function() {
+                if(currentRentedBike !== null) return alert("❌ 您已經有一台租借中的車輛！");
+                selectedBikeToRent = id; 
+                document.getElementById('inputPlateNum').value = id; 
+                document.getElementById('inputEPassword').value = ""; 
+                document.getElementById('simulatedBikeScreen').innerText = serverBikeDatabase[id].pwd;
+                document.getElementById('rentVerifyPanel').style.display = 'block';
+            });
+            bikeMarkers[id] = marker; 
+        }
+
+        function closeRentPanel() { document.getElementById('rentVerifyPanel').style.display = 'none'; selectedBikeToRent = null; }
+
+        function confirmRent() {
+            let plateNum = document.getElementById('inputPlateNum').value;
+            let ePwd = document.getElementById('inputEPassword').value;
+
+            let balance = parseInt(localStorage.getItem('walletBalance') || '0');
+            if(balance < 10) return alert("❌ 錢包餘額不足 (單次騎乘需 $10)！請先至會員中心儲值。");
+            if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert("❌ 電子密碼驗證失敗！");
+
+            localStorage.setItem('walletBalance', (balance - 10).toString());
+            closeRentPanel();
+            if (bikeMarkers[plateNum]) { map.removeLayer(bikeMarkers[plateNum]); delete bikeMarkers[plateNum]; }
+
+            alert(`✅ 付款成功！已扣款 $10 (餘額 $${balance - 10})。\n車輛解鎖，開始計時！`);
+            currentRentedBike = plateNum;
+            document.getElementById('rentedBikeId').innerText = plateNum;
+            document.getElementById('activeRidePanel').style.display = 'block';
+
+            rideSeconds = 0; document.getElementById('rideTimer').innerText = "00:00";
+            rideInterval = setInterval(() => {
+                rideSeconds++;
+                let m = Math.floor(rideSeconds / 60).toString().padStart(2, '0');
+                let s = (rideSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('rideTimer').innerText = m + ":" + s;
+            }, 1000);
+        }
+
+        function returnBike() {
+            clearInterval(rideInterval);
+            let timeStr = document.getElementById('rideTimer').innerText;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) { finishReturn(pos.coords.latitude, pos.coords.longitude, timeStr); },
+                    function(err) { finishReturn(map.getCenter().lat, map.getCenter().lng, timeStr); }
+                );
+            } else { finishReturn(map.getCenter().lat, map.getCenter().lng, timeStr); }
+        }
+
+        function finishReturn(lat, lng, timeStr) {
+            document.getElementById('activeRidePanel').style.display = 'none';
+            serverBikeDatabase[currentRentedBike].lat = lat; serverBikeDatabase[currentRentedBike].lng = lng;
+            let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+            createBikeMarker(currentRentedBike, lat, lng, icon); map.setView([lat, lng], 16);
+            alert(`✅ 還車成功！\n騎乘時間：${timeStr}`); currentRentedBike = null;
+        }
+    </script>
+</body>
+</html>
