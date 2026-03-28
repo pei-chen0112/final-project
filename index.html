@@ -94,24 +94,24 @@
         </header>
         <div class="menu-grid">
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>我要借車</h3></div>
-            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">💳</div><h3>數位錢包</h3></div>
+            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3>會員專區</h3></div>
             <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3>車輛報修</h3></div>
         </div>
     </section>
 
-    <!-- ==================== 4. 會員中心 (數位錢包 & O2O車輛提供) ==================== -->
+    <!-- ==================== 4. 會員專區 (帳戶餘額 & O2O車輛提供) ==================== -->
     <section id="memberSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>會員中心與錢包</h1></header>
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>會員專區</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
             
-            <!-- 數位錢包區塊 -->
-            <div id="walletDisplay" style="width: 100%;"></div>
+            <!-- 會員帳戶餘額區塊 -->
+            <div id="memberDisplay" style="width: 100%;"></div>
             
             <!-- O2O 提供車輛區塊 -->
             <div class="upload-box" style="margin-top: 30px;">
                 <h4 style="margin-top: 0; color: #2e7d32;">🚲 線上申請提供車輛</h4>
                 <p style="font-size: 13px; color: #555; line-height: 1.5;">
-                    牽至【校內修理站】安裝硬體。<br>技師上架後，系統自動回饋 <strong>$50 儲值金</strong>！
+                    牽至【校內修理站】安裝硬體。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
                 </p>
                 <button class="btn btn-green" onclick="submitBikeApproval()">送出線上申請單</button>
             </div>
@@ -154,15 +154,14 @@
 
         <div id="rentVerifyPanel">
             <h3 style="color: #0072C6;">解鎖車輛</h3>
-            <p style="font-size: 13px; color: gray;">每次騎乘將扣除錢包餘額 <strong style="color:#0072C6;">$10</strong></p>
+            <p style="font-size: 13px; color: gray;">每次騎乘將扣除會員帳戶餘額 <strong style="color:#0072C6;">$10</strong></p>
             
             <div class="input-group"><label>車牌號碼</label><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
             
-            <!-- 已經移除畫面上的密碼提示，模擬需看實體車機 -->
             <p style="font-size: 12px; color: #F44336; margin-bottom: 5px; text-align: left;">*請查看實體腳踏車電子螢幕上的 4 位數密碼</p>
             <div class="input-group"><input type="password" id="inputEPassword" placeholder="輸入電子密碼" required></div>
             
-            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()">數位錢包付款並解鎖</button>
+            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()">帳戶餘額付款並解鎖</button>
             <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()">取消</button>
         </div>
 
@@ -184,7 +183,7 @@
         let repairQueue = [], approvalQueue = [], currentUser = ""; 
         let validPromoCodes = { "SDGS-2024": { amount: 50, used: false }, "PROFESSOR-100": { amount: 100, used: false } };
 
-        // 💡 10秒自動刷新密碼 (改為只印在 Console 中供開發者/教授測試看)
+        // 10秒自動刷新密碼 (印在 Console 中供開發者/教授測試看)
         setInterval(() => {
             console.log("🔄 車輛動態密碼已刷新：");
             for (let bikeId in serverBikeDatabase) { 
@@ -209,7 +208,7 @@
             event.preventDefault();
             localStorage.setItem('savedStudentId', document.getElementById('regId').value);
             localStorage.setItem('savedPassword', document.getElementById('regPwd').value);
-            if (!localStorage.getItem('walletBalance')) localStorage.setItem('walletBalance', '0'); 
+            if (!localStorage.getItem('accountBalance')) localStorage.setItem('accountBalance', '0'); 
             alert("✅ 註冊成功！請登入系統。"); switchView('loginSection');
         }
 
@@ -227,14 +226,14 @@
             } else { document.getElementById('loginError').style.display = 'block'; }
         }
 
-        // --- 3. 數位錢包邏輯 ---
-        function enterMemberPage() { renderWallet(); switchView('memberSection'); }
+        // --- 3. 會員專區邏輯 ---
+        function enterMemberPage() { renderMemberCenter(); switchView('memberSection'); }
 
-        function renderWallet() {
-            let balance = localStorage.getItem('walletBalance') || '0';
-            document.getElementById('walletDisplay').innerHTML = `
+        function renderMemberCenter() {
+            let balance = localStorage.getItem('accountBalance') || '0';
+            document.getElementById('memberDisplay').innerHTML = `
                 <div style="background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: left;">
-                    <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">NTUE Bike 數位錢包</h3>
+                    <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">會員帳戶餘額</h3>
                     <div style="font-size: 36px; font-weight: bold; margin-bottom: 20px;">$ ${balance}</div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn" style="margin-top:0; background-color: #00C300; font-size: 14px; padding: 10px;" onclick="openLinePayMock()">💬 LINE Pay 儲值</button>
@@ -249,9 +248,9 @@
             alert(`🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)`);
             setTimeout(() => {
                 if (confirm(`【LINE Pay 模擬畫面】\n是否確認支付 NT$ ${amount}？`)) {
-                    let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
-                    localStorage.setItem('walletBalance', (currentBalance + parseInt(amount)).toString());
-                    alert("✅ LINE Pay 交易成功！"); renderWallet();
+                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+                    localStorage.setItem('accountBalance', (currentBalance + parseInt(amount)).toString());
+                    alert("✅ LINE Pay 交易成功！"); renderMemberCenter();
                 } else { alert("❌ 交易已取消。"); }
             }, 1500);
         }
@@ -264,10 +263,10 @@
                 if (validPromoCodes[code].used) { alert("❌ 兌換失敗：此序號已被使用過了！"); } 
                 else {
                     let bonus = validPromoCodes[code].amount;
-                    let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
-                    localStorage.setItem('walletBalance', (currentBalance + bonus).toString());
+                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+                    localStorage.setItem('accountBalance', (currentBalance + bonus).toString());
                     validPromoCodes[code].used = true;
-                    alert(`🎉 兌換成功！獲得 ${bonus} 元儲值金！`); renderWallet();
+                    alert(`🎉 兌換成功！獲得 ${bonus} 元儲值金！`); renderMemberCenter();
                 }
             } else { alert("❌ 兌換失敗：無效的序號！"); }
         }
@@ -328,15 +327,15 @@
             serverBikeDatabase[newBikeId] = { lat: newLat, lng: newLng, pwd: "0000", status: "active" };
             
             // 系統發放 50 元獎勵給該學生
-            let currentBalance = parseInt(localStorage.getItem('walletBalance') || '0');
-            localStorage.setItem('walletBalance', (currentBalance + 50).toString());
+            let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+            localStorage.setItem('accountBalance', (currentBalance + 50).toString());
 
             if(isMapInitialized) {
                 let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
                 createBikeMarker(newBikeId, newLat, newLng, icon);
             }
             approvalQueue.splice(index, 1);
-            alert(`✅ 已核發車牌【${newBikeId}】。\n已自動匯入 $50 獎勵金至申請者錢包！`); renderAdminDashboard();
+            alert(`✅ 已核發車牌【${newBikeId}】。\n已自動匯入 $50 獎勵金至申請者帳戶！`); renderAdminDashboard();
         }
         function rejectBike(index) { approvalQueue.splice(index, 1); alert("❌ 已退回。"); renderAdminDashboard(); }
 
@@ -366,7 +365,6 @@
                 document.getElementById('inputPlateNum').value = id; 
                 document.getElementById('inputEPassword').value = ""; 
                 
-                // 💡 在這裡也偷偷印出當下點擊的車輛密碼，方便教授測試
                 console.log(`[提示] 您目前選擇的車號 ${id}，目前的解鎖密碼為: ${serverBikeDatabase[id].pwd}`);
                 
                 document.getElementById('rentVerifyPanel').style.display = 'block';
@@ -380,13 +378,13 @@
             let plateNum = document.getElementById('inputPlateNum').value;
             let ePwd = document.getElementById('inputEPassword').value;
 
-            let balance = parseInt(localStorage.getItem('walletBalance') || '0');
-            if(balance < 10) return alert("❌ 錢包餘額不足 (單次騎乘需 $10)！請先至會員中心儲值。");
+            let balance = parseInt(localStorage.getItem('accountBalance') || '0');
+            if(balance < 10) return alert("❌ 帳戶餘額不足 (單次騎乘需 $10)！請先至會員專區儲值。");
             
             // 💡 密碼驗證
             if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert("❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。");
 
-            localStorage.setItem('walletBalance', (balance - 10).toString());
+            localStorage.setItem('accountBalance', (balance - 10).toString());
             closeRentPanel();
             if (bikeMarkers[plateNum]) { map.removeLayer(bikeMarkers[plateNum]); delete bikeMarkers[plateNum]; }
 
