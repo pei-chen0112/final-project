@@ -29,11 +29,11 @@
         .link-text { margin-top: 15px; font-size: 14px; cursor: pointer; color: #4CAF50; font-weight: bold; text-decoration: underline; }
 
         /* ==================== 2. 主選單與頁面內容 ==================== */
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; padding: 20px; max-width: 400px; margin: 0 auto; width: 90%;}
         .menu-item { background: white; padding: 20px 10px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
         .menu-item:hover { border-color: #4CAF50; transform: translateY(-3px); }
-        .menu-item h3 { margin: 10px 0 0 0; color: #333; font-size: 16px; }
-        .menu-icon { font-size: 32px; }
+        .menu-item h3 { margin: 10px 0 0 0; color: #333; font-size: 18px; }
+        .menu-icon { font-size: 36px; }
         
         .page-content { padding: 30px; display: flex; flex-direction: column; align-items: center; }
         .upload-box { background: #f9f9f9; border: 2px dashed #4CAF50; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; width: 100%; box-sizing: border-box; }
@@ -95,7 +95,6 @@
         <div class="menu-grid">
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>我要借車</h3></div>
             <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">💳</div><h3>數位錢包</h3></div>
-            <div class="menu-item" onclick="enterInsurancePage()"><div class="menu-icon">🛡️</div><h3>保險專區</h3></div>
             <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3>車輛報修</h3></div>
         </div>
     </section>
@@ -119,30 +118,7 @@
         </div>
     </section>
 
-    <!-- ==================== 5. 保險專區 ==================== -->
-    <section id="insuranceSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>🛡️ 騎乘保險中心</h1></header>
-        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
-            <h3 style="margin-top:0;">目前保險狀態</h3>
-            <div id="insuranceStatusDisplay" style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">讀取中...</div>
-
-            <p style="font-size: 12px; color: gray; text-align: left; margin-bottom: 15px;">使用數位錢包餘額加購以下方案：</p>
-
-            <div style="text-align: left; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                <h4 style="margin: 0 0 5px 0; color: #0072C6;">🛡️ 單次平安險 (24小時)</h4>
-                <p style="font-size: 13px; color: gray; margin: 0 0 10px 0;">保障騎乘期間意外傷害，最高理賠 100 萬。</p>
-                <button class="btn" style="background-color: #0072C6; padding: 8px; margin-top: 0;" onclick="buyInsurance('單次平安險', 5)">扣款 $5 立即投保</button>
-            </div>
-
-            <div style="text-align: left; border: 1px solid #ddd; padding: 15px; border-radius: 10px;">
-                <h4 style="margin: 0 0 5px 0; color: #2e7d32;">👑 月費通勤險 (30天)</h4>
-                <p style="font-size: 13px; color: gray; margin: 0 0 10px 0;">包含第三人責任險與個人傷害險，無限次保障。</p>
-                <button class="btn btn-green" style="padding: 8px; margin-top: 0;" onclick="buyInsurance('月費通勤險', 50)">扣款 $50 立即投保</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 6. 車輛報修 ==================== -->
+    <!-- ==================== 5. 車輛報修 ==================== -->
     <section id="repairSection" class="view-section">
         <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>車輛報修</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
@@ -153,7 +129,7 @@
         </div>
     </section>
 
-    <!-- ==================== 7. 修理站技師專屬後台 ==================== -->
+    <!-- ==================== 6. 修理站技師專屬後台 ==================== -->
     <section id="adminSection" class="view-section">
         <header>
             <button class="back-btn" onclick="logout()">登出</button>
@@ -171,7 +147,7 @@
         </div>
     </section>
 
-    <!-- ==================== 8. 借車地圖與面板 ==================== -->
+    <!-- ==================== 7. 借車地圖與面板 ==================== -->
     <section id="mapSection" class="view-section" style="position: relative;">
         <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 主選單</button><h1>地圖尋車</h1></header>
         <div id="map"></div>
@@ -179,14 +155,13 @@
         <div id="rentVerifyPanel">
             <h3 style="color: #0072C6;">解鎖車輛</h3>
             <p style="font-size: 13px; color: gray;">每次騎乘將扣除錢包餘額 <strong style="color:#0072C6;">$10</strong></p>
-            <div class="input-group"><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
             
-            <div style="background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <span style="font-size: 12px; color: #2e7d32;">車機螢幕動態密碼：</span><br>
-                <strong style="font-size: 20px; letter-spacing: 2px;" id="simulatedBikeScreen">----</strong>
-            </div>
-
+            <div class="input-group"><label>車牌號碼</label><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
+            
+            <!-- 已經移除畫面上的密碼提示，模擬需看實體車機 -->
+            <p style="font-size: 12px; color: #F44336; margin-bottom: 5px; text-align: left;">*請查看實體腳踏車電子螢幕上的 4 位數密碼</p>
             <div class="input-group"><input type="password" id="inputEPassword" placeholder="輸入電子密碼" required></div>
+            
             <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()">數位錢包付款並解鎖</button>
             <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()">取消</button>
         </div>
@@ -209,11 +184,13 @@
         let repairQueue = [], approvalQueue = [], currentUser = ""; 
         let validPromoCodes = { "SDGS-2024": { amount: 50, used: false }, "PROFESSOR-100": { amount: 100, used: false } };
 
-        // 10秒自動刷新密碼
+        // 💡 10秒自動刷新密碼 (改為只印在 Console 中供開發者/教授測試看)
         setInterval(() => {
-            for (let bikeId in serverBikeDatabase) { serverBikeDatabase[bikeId].pwd = Math.floor(1000 + Math.random() * 9000).toString(); }
-            if(document.getElementById('rentVerifyPanel').style.display === 'block') {
-                document.getElementById('simulatedBikeScreen').innerText = serverBikeDatabase[document.getElementById('inputPlateNum').value].pwd;
+            console.log("🔄 車輛動態密碼已刷新：");
+            for (let bikeId in serverBikeDatabase) { 
+                let newPwd = Math.floor(1000 + Math.random() * 9000).toString();
+                serverBikeDatabase[bikeId].pwd = newPwd; 
+                console.log(`[${bikeId}] 實體車機螢幕顯示密碼: ${newPwd}`);
             }
         }, 10000);
 
@@ -295,26 +272,7 @@
             } else { alert("❌ 兌換失敗：無效的序號！"); }
         }
 
-        // --- 4. 保險專區邏輯 ---
-        function enterInsurancePage() {
-            let currentIns = localStorage.getItem('userInsurance');
-            let statusDiv = document.getElementById('insuranceStatusDisplay');
-            if (currentIns) { statusDiv.innerText = `✅ 已生效：${currentIns}`; statusDiv.style.color = '#4CAF50'; } 
-            else { statusDiv.innerText = '❌ 尚未投保任何險種'; statusDiv.style.color = '#F44336'; }
-            switchView('insuranceSection');
-        }
-
-        function buyInsurance(planName, cost) {
-            let balance = parseInt(localStorage.getItem('walletBalance') || '0');
-            if (balance < cost) return alert(`❌ 錢包餘額不足！需要 $${cost}，請先至會員中心儲值。`);
-            if (confirm(`【投保確認】\n確定花費 $${cost} 購買「${planName}」嗎？`)) {
-                localStorage.setItem('walletBalance', (balance - cost).toString());
-                localStorage.setItem('userInsurance', planName);
-                alert(`✅ 投保成功！保費已從錢包扣除。`); enterInsurancePage(); 
-            }
-        }
-
-        // --- 5. O2O 提供車輛與報修 (學生端) ---
+        // --- 4. O2O 提供車輛與報修 (學生端) ---
         function submitBikeApproval() {
             approvalQueue.push({ id: Date.now(), studentId: currentUser, time: new Date().toLocaleTimeString() });
             alert("✅ 申請已送出！請牽車至修理站安裝硬體。"); switchView('mainMenuSection');
@@ -332,7 +290,7 @@
             alert("✅ 已通報並下線該車輛！請牽至修理站。"); switchView('mainMenuSection');
         }
 
-        // --- 6. 修理站後台邏輯 ---
+        // --- 5. 修理站後台邏輯 ---
         function renderAdminDashboard() {
             let repairHtml = "";
             if (repairQueue.length === 0) repairHtml = "<tr><td colspan='3' style='text-align:center; color:gray;'>無待修車輛</td></tr>";
@@ -382,7 +340,7 @@
         }
         function rejectBike(index) { approvalQueue.splice(index, 1); alert("❌ 已退回。"); renderAdminDashboard(); }
 
-        // --- 7. 地圖與借車扣款邏輯 ---
+        // --- 6. 地圖與借車扣款邏輯 ---
         let map, isMapInitialized = false, bikeMarkers = {};
         let selectedBikeToRent = null, currentRentedBike = null, rideInterval = null, rideSeconds = 0;
 
@@ -407,7 +365,10 @@
                 selectedBikeToRent = id; 
                 document.getElementById('inputPlateNum').value = id; 
                 document.getElementById('inputEPassword').value = ""; 
-                document.getElementById('simulatedBikeScreen').innerText = serverBikeDatabase[id].pwd;
+                
+                // 💡 在這裡也偷偷印出當下點擊的車輛密碼，方便教授測試
+                console.log(`[提示] 您目前選擇的車號 ${id}，目前的解鎖密碼為: ${serverBikeDatabase[id].pwd}`);
+                
                 document.getElementById('rentVerifyPanel').style.display = 'block';
             });
             bikeMarkers[id] = marker; 
@@ -421,7 +382,9 @@
 
             let balance = parseInt(localStorage.getItem('walletBalance') || '0');
             if(balance < 10) return alert("❌ 錢包餘額不足 (單次騎乘需 $10)！請先至會員中心儲值。");
-            if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert("❌ 電子密碼驗證失敗！");
+            
+            // 💡 密碼驗證
+            if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert("❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。");
 
             localStorage.setItem('walletBalance', (balance - 10).toString());
             closeRentPanel();
