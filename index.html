@@ -182,7 +182,7 @@
     <script>
         // --- 1. 虛擬資料庫與狀態 ---
         let serverBikeDatabase = {
-            "BIKE-001": { lat: 24.96815, lng: 121.21942, pwd: "0000", status: "active" },
+            "BIKE-001": { lat: 24.970643486259682, , lng: 121.19349421562545, pwd: "0000", status: "active" },
             "BIKE-002": { lat: 24.96750, lng: 121.21850, pwd: "0000", status: "active" }
         };
         let repairQueue = [], approvalQueue = [], currentUser = ""; 
@@ -274,25 +274,7 @@
             } else { alert("❌ 兌換失敗：無效的序號！"); }
         }
 
-        // --- 4. 保險專區邏輯 ---
-        function enterInsurancePage() {
-            let currentIns = localStorage.getItem('userInsurance');
-            let statusDiv = document.getElementById('insuranceStatusDisplay');
-            if (currentIns) { statusDiv.innerText = `✅ 已生效：${currentIns}`; statusDiv.style.color = '#4CAF50'; } 
-            else { statusDiv.innerText = '❌ 尚未投保任何險種'; statusDiv.style.color = '#F44336'; }
-            switchView('insuranceSection');
-        }
-
-        function buyInsurance(planName, cost) {
-            let balance = parseInt(localStorage.getItem('walletBalance') || '0');
-            if (balance < cost) return alert(`❌ 錢包餘額不足！需要 $${cost}，請先至會員中心儲值。`);
-            if (confirm(`【投保確認】\n確定花費 $${cost} 購買「${planName}」嗎？`)) {
-                localStorage.setItem('walletBalance', (balance - cost).toString());
-                localStorage.setItem('userInsurance', planName);
-                alert(`✅ 投保成功！保費已從錢包扣除。`); enterInsurancePage(); 
-            }
-        }
-
+        
         // --- 5. O2O 提供車輛與報修 (學生端) ---
         function submitBikeApproval() {
             approvalQueue.push({ id: Date.now(), studentId: currentUser, time: new Date().toLocaleTimeString() });
