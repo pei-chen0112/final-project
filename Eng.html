@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCU Green Love Bikes | 中大綠色愛心腳踏車系統</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* ==================== 1. 基礎與共用樣式 ==================== */
+        body { font-family: "微軟正黑體", Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
+        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
+        .active-view { display: flex; }
+        .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
+        header { background-color: #2e7d32; color: white; padding: 15px 0; text-align: center; position: relative; flex-shrink: 0; }
+        header h1 { margin: 0; font-size: 22px; }
+        .back-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
+
+        .auth-container { background: linear-gradient(135deg, #4caf50 0%, #1b5e20 100%); justify-content: center; align-items: center; }
+        .card { background-color: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 350px; text-align: center; margin: 0 auto; position: relative; }
+        .card h2 { color: #2e7d32; margin-top: 0; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; font-size: 14px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-green { background-color: #2e7d32; } .btn-green:hover { background-color: #1b5e20; }
+        .btn-orange { background-color: #ff9800; } .btn-orange:hover { background-color: #e68a00; }
+        .btn-red { background-color: #F44336; } .btn-red:hover { background-color: #D32F2F; }
+        .link-text { margin-top: 15px; font-size: 14px; cursor: pointer; color: #2e7d32; font-weight: bold; text-decoration: underline; }
+
+        /* ==================== 2. 主選單與頁面內容 ==================== */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; max-width: 500px; margin: 0 auto; width: 90%;}
+        .menu-item { background: white; padding: 20px 10px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .menu-item:hover { border-color: #2e7d32; transform: translateY(-3px); }
+        .menu-item h3 { margin: 10px 0 0 0; color: #333; font-size: 16px; }
+        .menu-icon { font-size: 36px; }
+        
+        .page-content { padding: 30px; display: flex; flex-direction: column; align-items: center; }
+        .upload-box { background: #f9f9f9; border: 2px dashed #2e7d32; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; width: 100%; box-sizing: border-box; }
+
+        /* ==================== 3. 修理站技師專屬後台樣式 ==================== */
+        #adminSection header { background-color: #333; } 
+        .admin-panel { padding: 20px; width: 95%; max-width: 800px; margin: 0 auto; }
+        .admin-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #ff9800; }
+        .admin-card h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f4f4f9; }
+        .action-btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px;}
+        .btn-approve { background-color: #2e7d32; }
+        .btn-reject { background-color: #F44336; }
+
+        /* ==================== 4. 地圖與浮動面板樣式 ==================== */
+        #map { flex-grow: 1; width: 100%; z-index: 1; }
+        #rentVerifyPanel { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); z-index: 2000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #0072C6; }
+        #activeRidePanel { display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #2e7d32; }
+        .timer { font-size: 32px; font-weight: bold; color: #2e7d32; margin: 10px 0; font-family: monospace; }
+        
+        /* 語言切換選單 */
+        .lang-switch { position: absolute; top: 15px; right: 15px; z-index: 999; }
+        .lang-switch select { padding: 6px; border-radius: 8px; border: 2px solid #fff; background: rgba(255,255,255,0.9); color: #1b5e20; font-weight: bold; cursor: pointer; outline: none; }
+    </style>
+</head>
+<body>
+
+    <section id="loginSection" class="view-section active-view auth-container" style="position: relative;">
+        <div class="lang-switch">
+            <select onchange="changeLang(this.value)">
+                <option value="zh">🇹🇼 中文</option>
+                <option value="en">🇺🇸 EN</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h2>🚲 NCU Green Love Bikes</h2>
+            <p style="font-size: 12px; color: #666; margin-top: -5px;" data-i18n="login_sub">中大愛心綠色腳踏車</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group"><label data-i18n="id_label">學號 / 帳號</label><input type="text" id="loginId" data-i18n-ph="id_ph" placeholder="技師請輸入 admin" required></div>
+                <div class="input-group"><label data-i18n="pwd_label">密碼</label><input type="password" id="loginPwd" data-i18n-ph="pwd_ph" placeholder="技師密碼 admin123" required></div>
+                <button type="submit" class="btn btn-green" data-i18n="login_btn">登入系統 (Login)</button>
+            </form>
+            <div class="link-text" onclick="switchView('registerSection')" data-i18n="go_reg">還沒有帳號？ 前往註冊 (Registration)</div>
+            <div class="link-text" style="color: #F44336; margin-top: 5px;" onclick="alert(t('alt_forget'))" data-i18n="forget_pwd">忘記密碼 (Forget password)</div>
+        </div>
+    </section>
+
+    <section id="registerSection" class="view-section auth-container">
+        <div class="card">
+            <h2 data-i18n="reg_title">📝 新增學生帳號</h2>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group"><label data-i18n="reg_id_label">設定學號</label><input type="text" id="regId" required></div>
+                <div class="input-group"><label data-i18n="reg_pwd_label">設定密碼</label><input type="password" id="regPwd" required></div>
+                <button type="submit" class="btn btn-orange" data-i18n="reg_btn">立即開通帳號 (Registration)</button>
+            </form>
+            <div class="link-text" onclick="switchView('loginSection')" data-i18n="back_login">返回登入 (Login)</div>
+        </div>
+    </section>
+
+    <section id="mainMenuSection" class="view-section">
+        <header>
+            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
+            <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
+        </header>
+        <div class="menu-grid">
+            <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3 data-i18n="menu_map">地圖尋車<br><span style="font-size: 12px; color:gray;">Bicycle rental map</span></h3></div>
+            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3 data-i18n="menu_member">會員專區<br><span style="font-size: 12px; color:gray;">Members area</span></h3></div>
+            <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3 data-i18n="menu_repair">車輛報修<br><span style="font-size: 12px; color:gray;">Bicycle repair</span></h3></div>
+            <div class="menu-item" onclick="enterCarbonPage()"><div class="menu-icon">🌍</div><h3 data-i18n="menu_carbon">減碳貢獻<br><span style="font-size: 12px; color:gray;">Reduce carbon</span></h3></div>
+        </div>
+    </section>
+
+    <section id="carbonSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="carbon_title">減碳貢獻 (Reduce carbon)</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="carbon_h3">🌍 您的綠色足跡</h3>
+            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.6;" data-i18n="carbon_p">
+                依據歐洲自行車聯盟 (ECF) 研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。
+            </p>
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center;">
+                <p style="margin: 0; color: #2e7d32; font-size: 14px;" data-i18n="carbon_today">本日節碳量 (Today)</p>
+                <h2 style="margin: 5px 0; color: #1b5e20; font-size: 36px;"><span id="dailyCarbon">0</span> <span style="font-size:16px;">g</span></h2>
+            </div>
+            <div style="background: #f4f4f9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center; border: 1px solid #ddd;">
+                <p style="margin: 0; color: #555; font-size: 14px;" data-i18n="carbon_total">累積總節碳量 (Total)</p>
+                <h2 style="margin: 5px 0; color: #333; font-size: 36px;"><span id="totalCarbon">0</span> <span style="font-size:16px;">g</span></h2>
+            </div>
+        </div>
+    </section>
+
+    <section id="memberSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="member_title">會員專區 (Members area)</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <div id="memberDisplay" style="width: 100%;"></div>
+            <div class="upload-box" style="margin-top: 30px;">
+                <h4 style="margin-top: 0; color: #2e7d32;" data-i18n="reclaim_title">🚲 回收校園廢棄車輛 (SDG Goals)</h4>
+                <p style="font-size: 13px; color: #555; line-height: 1.5;" data-i18n="reclaim_desc">
+                    1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
+                </p>
+                <button class="btn btn-green" onclick="submitBikeApproval()" data-i18n="reclaim_btn">送出線上回收申請</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="repairSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="repair_title">車輛報修 (Bicycle repair)</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;" data-i18n="repair_warn">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
+            <div class="input-group"><label data-i18n="rep_id_label">故障車牌號碼</label><input type="text" id="repairBikeId" data-i18n-ph="rep_id_ph" placeholder="例如: NCU-001"></div>
+            <div class="input-group"><label data-i18n="rep_desc_label">損壞狀況描述</label><input type="text" id="repairDesc" data-i18n-ph="rep_desc_ph" placeholder="例如: 煞車失靈"></div>
+            <button class="btn btn-orange" onclick="submitRepair()" data-i18n="repair_btn">通報損壞腳踏車</button>
+        </div>
+    </section>
+
+    <section id="adminSection" class="view-section">
+        <header>
+            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
+            <h1 data-i18n="admin_title">👨‍🔧 腳踏車修理站 - 技師管理後台</h1>
+        </header>
+        <div class="admin-panel">
+            <div class="admin-card">
+                <h3 data-i18n="admin_appr_title">🚲 待改裝與註冊車輛 (Reclaim abandoned bikes)</h3>
+                <table>
+                    <thead><tr><th data-i18n="th_student">申請學生</th><th data-i18n="th_time">申請時間</th><th data-i18n="th_action">操作</th></tr></thead>
+                    <tbody id="adminApprovalTable"></tbody>
+                </table>
+            </div>
+            <div class="admin-card" style="border-left-color: #F44336;">
+                <h3 data-i18n="admin_rep_title">🔧 待修復車輛清單 (Report a broken bicycle)</h3>
+                <table>
+                    <thead><tr><th data-i18n="th_bike">報修車號</th><th data-i18n="th_desc">損壞描述</th><th data-i18n="th_action">操作</th></tr></thead>
+                    <tbody id="adminRepairTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="mapSection" class="view-section" style="position: relative;">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 主選單</button><h1 data-i18n="map_title">地圖尋車 (Bicycle rental map)</h1></header>
+        <div id="map"></div>
+
+        <div id="rentVerifyPanel">
+            <h3 style="color: #0072C6;" data-i18n="unlock_title">解鎖車輛</h3>
+            <p style="font-size: 12px; color: gray;" data-i18n="unlock_desc">無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style="color:#0072C6;">$5</strong></p>
+            <div class="input-group"><label data-i18n="plate_label">車牌號碼</label><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
+            <p style="font-size: 12px; color: #F44336; margin-bottom: 5px; text-align: left;" data-i18n="pwd_warn">*請查看實體腳踏車電子螢幕上的 4 位數密碼</p>
+            <div class="input-group"><input type="password" id="inputEPassword" data-i18n-ph="pwd_ph2" placeholder="輸入電子密碼" required></div>
+            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()" data-i18n="unlock_btn">帳戶餘額付款並解鎖</button>
+            <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()" data-i18n="cancel_btn">取消</button>
+        </div>
+
+        <div id="activeRidePanel">
+            <h2><span data-i18n="riding_title">🚲 騎乘中：</span><span id="rentedBikeId"></span></h2>
+            <div class="timer" id="rideTimer">00:00</div>
+            <p style="font-size: 12px; color: gray; margin-top: -5px;" data-i18n="gps_monitor">GPS 追蹤監控運行中</p>
+            <button class="btn btn-red" onclick="returnBike()" data-i18n="return_btn">⏹️ 結束騎乘並 GPS 還車</button>
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ==========================================
+        // 💡 雙語字典與切換邏輯 (i18n System)
+        // ==========================================
+        const translations = {
+            zh: {
+                login_sub: "中大愛心綠色腳踏車", id_label: "學號 / 帳號", pwd_label: "密碼", id_ph: "技師請輸入 admin", pwd_ph: "技師密碼 admin123", login_btn: "登入系統 (Login)", go_reg: "還沒有帳號？ 前往註冊 (Registration)", forget_pwd: "忘記密碼 (Forget password)",
+                reg_title: "📝 新增學生帳號", reg_id_label: "設定學號", reg_pwd_label: "設定密碼", reg_btn: "立即開通帳號 (Registration)", back_login: "返回登入 (Login)",
+                logout: "登出", menu_title: "中大愛心綠色腳踏車", menu_map: "地圖尋車<br><span style='font-size: 12px; color:gray;'>Bicycle rental map</span>", menu_member: "會員專區<br><span style='font-size: 12px; color:gray;'>Members area</span>", menu_repair: "車輛報修<br><span style='font-size: 12px; color:gray;'>Bicycle repair</span>", menu_carbon: "減碳貢獻<br><span style='font-size: 12px; color:gray;'>Reduce carbon</span>",
+                back: "❮ 返回", carbon_title: "減碳貢獻 (Reduce carbon)", carbon_h3: "🌍 您的綠色足跡", carbon_p: "依據歐洲自行車聯盟 (ECF) 研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。", carbon_today: "本日節碳量 (Today)", carbon_total: "累積總節碳量 (Total)",
+                member_title: "會員專區 (Members area)", wallet_title: "會員帳戶餘額", linepay_btn: "💬 LINE Pay 儲值", promo_btn: "🎁 序號兌換", reclaim_title: "🚲 回收校園廢棄車輛 (SDG Goals)", reclaim_desc: "1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！", reclaim_btn: "送出線上回收申請",
+                repair_title: "車輛報修 (Bicycle repair)", repair_warn: "⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。", rep_id_label: "故障車牌號碼", rep_id_ph: "例如: NCU-001", rep_desc_label: "損壞狀況描述", rep_desc_ph: "例如: 煞車失靈", repair_btn: "通報損壞腳踏車",
+                admin_title: "👨‍🔧 腳踏車修理站 - 技師管理後台", admin_appr_title: "🚲 待改裝與註冊車輛 (Reclaim abandoned bikes)", th_student: "申請學生", th_time: "申請時間", th_action: "操作", admin_rep_title: "🔧 待修復車輛清單 (Report a broken bicycle)", th_bike: "報修車號", th_desc: "損壞描述",
+                map_title: "地圖尋車 (Bicycle rental map)", unlock_title: "解鎖車輛", unlock_desc: "無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style='color:#0072C6;'>$5</strong>", plate_label: "車牌號碼", pwd_warn: "*請查看實體腳踏車電子螢幕上的 4 位數密碼", pwd_ph2: "輸入電子密碼", unlock_btn: "帳戶餘額付款並解鎖", cancel_btn: "取消", riding_title: "🚲 騎乘中：", gps_monitor: "GPS 追蹤監控運行中", return_btn: "⏹️ 結束騎乘並 GPS 還車",
+                // JS Alerts / Dynamic Data
+                alt_forget: "請聯繫計中或系統管理員重置密碼", alt_reg_ok: "✅ 註冊成功！請登入系統。", prompt_linepay: "請輸入想透過 LINE Pay 儲值的金額 (例如: 50, 100)：", err_amount: "❌ 請輸入有效的金額！", alt_line_wait: "🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)", cfm_linepay_1: "【LINE Pay 模擬畫面】\n是否確認支付 NT$ ", cfm_linepay_2: " ？", alt_line_ok: "✅ LINE Pay 交易成功！", alt_cancel: "❌ 交易已取消。", prompt_promo: "請輸入您的點數儲值序號：", err_promo_used: "❌ 兌換失敗：此序號已被使用過了！", alt_promo_ok: "🎉 兌換成功！獲得 ", alt_promo_ok2: " 元儲值金！", err_promo_invalid: "❌ 兌換失敗：無效的序號！", alt_offer_ok: "✅ 申請已送出！請牽車至修理站進行規格改裝與註冊系統。", err_empty: "請填寫完整資訊！", alt_rep_ok: "✅ 已通報並下線該車輛！請牽至修理站。", alt_fix_ok: "✅ 車輛 ", alt_fix_ok2: " 已修復重新上架！", alt_appr_ok: "✅ 已註冊系統並核發車牌【", alt_appr_ok2: "】。\n已自動匯入 $50 獎勵金至申請者帳戶！", alt_reject: "❌ 已退回。", err_renting: "❌ 您已經有一台租借中的車輛！", err_bal: "❌ 帳戶餘額不足 (單次騎乘需 $5)！請先至會員專區儲值。", err_pwd: "❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。", alt_rent_ok: "✅ 付款成功！已扣款 $5 (餘額 $", alt_rent_ok2: ")。\n車輛解鎖，開始計時！", alt_ret_ok: "✅ 還車成功！\n騎乘時間：", alt_ret_ok2: "\n🌱 本次為地球減少了 ", alt_ret_ok3: " g 的碳排放！", empty_rep: "無待修車輛", empty_appr: "無待安裝車輛", btn_fix: "修復上架", btn_appr: "完成改裝註冊 (發送獎勵)", btn_rej: "退回", err_login: "帳密錯誤或尚未註冊"
+            },
+            en: {
+                login_sub: "NCU Green Love Bikes", id_label: "Student ID / Account", pwd_label: "Password", id_ph: "Tech enter admin", pwd_ph: "Tech pwd admin123", login_btn: "Login", go_reg: "No account? Registration", forget_pwd: "Forget password",
+                reg_title: "📝 Create Account", reg_id_label: "Student ID", reg_pwd_label: "Set Password", reg_btn: "Registration", back_login: "Back to Login",
+                logout: "Logout", menu_title: "NCU Green Love Bikes", menu_map: "Find a Bike<br><span style='font-size: 12px; color:gray;'>Bicycle rental map</span>", menu_member: "Member Area<br><span style='font-size: 12px; color:gray;'>Members area</span>", menu_repair: "Report Repair<br><span style='font-size: 12px; color:gray;'>Bicycle repair</span>", menu_carbon: "Reduce Carbon<br><span style='font-size: 12px; color:gray;'>Carbon reduction</span>",
+                back: "❮ Back", carbon_title: "Reduce Carbon", carbon_h3: "🌍 Your Green Footprint", carbon_p: "Based on ECF standards, cycling saves <strong>250g</strong> of CO2 per km compared to driving.", carbon_today: "Today's Carbon Saved", carbon_total: "Total Carbon Saved",
+                member_title: "Members Area", wallet_title: "Account Balance", linepay_btn: "💬 LINE Pay Top-up", promo_btn: "🎁 Redeem Code", reclaim_title: "🚲 Reclaim Abandoned Bikes", reclaim_desc: "1. Bring bike to Repair Station.<br>2. Install GPS lock.<br>Earn <strong>$50 Bonus</strong>!", reclaim_btn: "Submit Reclaim Request",
+                repair_title: "Bicycle Repair", repair_warn: "⚠️ Reported bikes will be hidden from the map. Bring it to the station.", rep_id_label: "Bike Plate Number", rep_id_ph: "e.g., NCU-001", rep_desc_label: "Damage Description", rep_desc_ph: "e.g., Broken brakes", repair_btn: "Report Broken Bike",
+                admin_title: "👨‍🔧 Bike Repair Station - Tech Admin", admin_appr_title: "🚲 Pending Reclaim & Registration", th_student: "Student", th_time: "Time", th_action: "Action", admin_rep_title: "🔧 Pending Repair List", th_bike: "Bike ID", th_desc: "Description",
+                map_title: "Bicycle Rental Map", unlock_title: "Unlock Bike", unlock_desc: "Dockless rental. Deducts <strong style='color:#0072C6;'>$5</strong> per ride.", plate_label: "Plate Number", pwd_warn: "*Check the 4-digit code on the bike's screen", pwd_ph2: "Enter code", unlock_btn: "Pay & Unlock", cancel_btn: "Cancel", riding_title: "🚲 Riding: ", gps_monitor: "GPS Tracking Active", return_btn: "⏹️ End Ride & GPS Return",
+                // JS Alerts / Dynamic Data
+                alt_forget: "Please contact the admin to reset your password.", alt_reg_ok: "✅ Registration successful! Please login.", prompt_linepay: "Enter LINE Pay top-up amount (e.g., 50, 100):", err_amount: "❌ Invalid amount!", alt_line_wait: "🔄 Redirecting to LINE Pay...\n(Please wait 1.5s)", cfm_linepay_1: "[LINE Pay Simulation]\nConfirm payment of NT$ ", cfm_linepay_2: " ?", alt_line_ok: "✅ LINE Pay successful!", alt_cancel: "❌ Transaction canceled.", prompt_promo: "Enter promo code:", err_promo_used: "❌ Promo code already used!", alt_promo_ok: "🎉 Success! You received $", alt_promo_ok2: " bonus!", err_promo_invalid: "❌ Invalid promo code!", alt_offer_ok: "✅ Sent! Bring bike to station for GPS installation.", err_empty: "Please fill in all fields!", alt_rep_ok: "✅ Reported and taken offline! Bring bike to station.", alt_fix_ok: "✅ Bike ", alt_fix_ok2: " fixed and online!", alt_appr_ok: "✅ Registered! Plate issued: [", alt_appr_ok2: "].\n$50 bonus credited!", alt_reject: "❌ Rejected.", err_renting: "❌ You already have an active rental!", err_bal: "❌ Insufficient balance ($5 required)! Top up in Member Area.", err_pwd: "❌ Invalid password! Check the physical bike screen.", alt_rent_ok: "✅ Payment success! Deducted $5 (Balance $", alt_rent_ok2: ").\nBike unlocked, timer started!", alt_ret_ok: "✅ Return successful!\nDuration: ", alt_ret_ok2: "\n🌱 You saved ", alt_ret_ok3: " g of carbon emissions!", empty_rep: "No pending repairs", empty_appr: "No pending applications", btn_fix: "Fixed & Online", btn_appr: "Approve & Reward", btn_rej: "Reject", err_login: "Invalid ID/Password or Unregistered"
+            }
+        };
+
+        let currentLang = 'zh';
+        function t(key) { return translations[currentLang][key] || key; }
+
+        function changeLang(lang) {
+            currentLang = lang;
+            // Update innerHTML
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                if (translations[lang][el.getAttribute('data-i18n')]) {
+                    el.innerHTML = translations[lang][el.getAttribute('data-i18n')];
+                }
+            });
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                if (translations[lang][el.getAttribute('data-i18n-ph')]) {
+                    el.placeholder = translations[lang][el.getAttribute('data-i18n-ph')];
+                }
+            });
+            // Re-render JS dynamic HTML if on that page
+            if (document.getElementById('memberSection').classList.contains('active-view')) renderMemberCenter();
+            if (document.getElementById('adminSection').classList.contains('active-view')) renderAdminDashboard();
+        }
+
+        // ==========================================
+        // 核心邏輯
+        // ==========================================
+        let serverBikeDatabase = {
+            "NCU-001": { lat: 24.96815, lng: 121.19242, pwd: "0000", status: "active" },
+            "NCU-002": { lat: 24.96750, lng: 121.19450, pwd: "0000", status: "active" }
+        };
+        let repairQueue = [], approvalQueue = [], currentUser = ""; 
+        let validPromoCodes = { "SDGS-2024": { amount: 50, used: false }, "PROFESSOR-100": { amount: 100, used: false } };
+
+        setInterval(() => {
+            console.log("🔄 動態密碼刷新 (Password Refreshed)：");
+            for (let bikeId in serverBikeDatabase) { 
+                let newPwd = Math.floor(1000 + Math.random() * 9000).toString();
+                serverBikeDatabase[bikeId].pwd = newPwd; 
+                console.log(`[${bikeId}] 實體車機螢幕顯示密碼 (Screen code): ${newPwd}`);
+            }
+        }, 10000);
+
+        function switchView(targetId) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active-view'));
+            document.getElementById(targetId).classList.add('active-view');
+        }
+
+        function logout() {
+            currentUser = ""; document.getElementById('loginId').value = ""; document.getElementById('loginPwd').value = "";
+            switchView('loginSection');
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            localStorage.setItem('savedStudentId', document.getElementById('regId').value);
+            localStorage.setItem('savedPassword', document.getElementById('regPwd').value);
+            if (!localStorage.getItem('accountBalance')) localStorage.setItem('accountBalance', '0'); 
+            alert(t('alt_reg_ok')); switchView('loginSection');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const id = document.getElementById('loginId').value;
+            const pwd = document.getElementById('loginPwd').value;
+
+            if (id === 'admin' && pwd === 'admin123') {
+                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); return;
+            }
+
+            if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
+                currentUser = id; document.getElementById('loginError').style.display = 'none'; switchView('mainMenuSection');
+            } else { 
+                document.getElementById('loginError').innerText = t('err_login');
+                document.getElementById('loginError').style.display = 'block'; 
+            }
+        }
+
+        function enterMemberPage() { renderMemberCenter(); switchView('memberSection'); }
+
+        function renderMemberCenter() {
+            let balance = localStorage.getItem('accountBalance') || '0';
+            document.getElementById('memberDisplay').innerHTML = `
+                <div style="background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: left;">
+                    <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">${t('wallet_title')}</h3>
+                    <div style="font-size: 36px; font-weight: bold; margin-bottom: 20px;">$ ${balance}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="margin-top:0; background-color: #00C300; font-size: 14px; padding: 10px;" onclick="openLinePayMock()">💬 ${t('linepay_btn')}</button>
+                        <button class="btn" style="margin-top:0; background-color: rgba(255,255,255,0.2); border: 1px solid white; font-size: 14px; padding: 10px;" onclick="redeemPromoCode()">🎁 ${t('promo_btn')}</button>
+                    </div>
+                </div>`;
+        }
+
+        function openLinePayMock() {
+            let amount = prompt(t('prompt_linepay'));
+            if (!amount || isNaN(amount) || amount <= 0) return alert(t('err_amount'));
+            alert(t('alt_line_wait'));
+            setTimeout(() => {
+                if (confirm(t('cfm_linepay_1') + amount + t('cfm_linepay_2'))) {
+                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+                    localStorage.setItem('accountBalance', (currentBalance + parseInt(amount)).toString());
+                    alert(t('alt_line_ok')); renderMemberCenter();
+                } else { alert(t('alt_cancel')); }
+            }, 1500);
+        }
+
+        function redeemPromoCode() {
+            let code = prompt(t('prompt_promo'));
+            if (!code) return;
+            code = code.toUpperCase();
+            if (validPromoCodes[code]) {
+                if (validPromoCodes[code].used) { alert(t('err_promo_used')); } 
+                else {
+                    let bonus = validPromoCodes[code].amount;
+                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+                    localStorage.setItem('accountBalance', (currentBalance + bonus).toString());
+                    validPromoCodes[code].used = true;
+                    alert(t('alt_promo_ok') + bonus + t('alt_promo_ok2')); renderMemberCenter();
+                }
+            } else { alert(t('err_promo_invalid')); }
+        }
+
+        function submitBikeApproval() {
+            approvalQueue.push({ id: Date.now(), studentId: currentUser, time: new Date().toLocaleTimeString() });
+            alert(t('alt_offer_ok')); switchView('mainMenuSection');
+        }
+
+        function submitRepair() {
+            let bikeId = document.getElementById('repairBikeId').value;
+            let desc = document.getElementById('repairDesc').value;
+            if(!bikeId || !desc) return alert(t('err_empty'));
+            if (serverBikeDatabase[bikeId]) {
+                serverBikeDatabase[bikeId].status = "maintenance";
+                if (bikeMarkers[bikeId]) { map.removeLayer(bikeMarkers[bikeId]); delete bikeMarkers[bikeId]; }
+            }
+            repairQueue.push({ bikeId: bikeId, desc: desc, time: new Date().toLocaleTimeString() });
+            alert(t('alt_rep_ok')); switchView('mainMenuSection');
+        }
+
+        function renderAdminDashboard() {
+            let repairHtml = "";
+            if (repairQueue.length === 0) repairHtml = `<tr><td colspan='3' style='text-align:center; color:gray;'>${t('empty_rep')}</td></tr>`;
+            repairQueue.forEach((item, i) => {
+                repairHtml += `<tr><td style="color:#F44336; font-weight:bold;">${item.bikeId}</td><td>${item.desc}</td>
+                <td><button class="action-btn btn-approve" onclick="resolveRepair(${i}, '${item.bikeId}')">${t('btn_fix')}</button></td></tr>`;
+            });
+            document.getElementById('adminRepairTable').innerHTML = repairHtml;
+
+            let approvalHtml = "";
+            if (approvalQueue.length === 0) approvalHtml = `<tr><td colspan='3' style='text-align:center; color:gray;'>${t('empty_appr')}</td></tr>`;
+            approvalQueue.forEach((item, i) => {
+                approvalHtml += `<tr><td>${item.studentId}</td><td>${item.time}</td>
+                <td><button class="action-btn btn-approve" onclick="approveBike(${i}, '${item.studentId}')">${t('btn_appr')}</button>
+                <button class="action-btn btn-reject" onclick="rejectBike(${i})">${t('btn_rej')}</button></td></tr>`;
+            });
+            document.getElementById('adminApprovalTable').innerHTML = approvalHtml;
+        }
+
+        function resolveRepair(index, bikeId) {
+            repairQueue.splice(index, 1);
+            if (serverBikeDatabase[bikeId]) {
+                serverBikeDatabase[bikeId].status = "active";
+                if (isMapInitialized) {
+                    let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+                    createBikeMarker(bikeId, serverBikeDatabase[bikeId].lat, serverBikeDatabase[bikeId].lng, icon);
+                }
+            }
+            alert(t('alt_fix_ok') + bikeId + t('alt_fix_ok2')); renderAdminDashboard();
+        }
+
+        function approveBike(index, studentId) {
+            let newBikeId = "NCU-00" + (Object.keys(serverBikeDatabase).length + 1);
+            let newLat = 24.968 + (Math.random() - 0.5) * 0.005, newLng = 121.192 + (Math.random() - 0.5) * 0.005;
+            serverBikeDatabase[newBikeId] = { lat: newLat, lng: newLng, pwd: "0000", status: "active" };
+            
+            let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+            localStorage.setItem('accountBalance', (currentBalance + 50).toString());
+
+            if(isMapInitialized) {
+                let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+                createBikeMarker(newBikeId, newLat, newLng, icon);
+            }
+            approvalQueue.splice(index, 1);
+            alert(t('alt_appr_ok') + newBikeId + t('alt_appr_ok2')); renderAdminDashboard();
+        }
+        function rejectBike(index) { approvalQueue.splice(index, 1); alert(t('alt_reject')); renderAdminDashboard(); }
+
+        let map, isMapInitialized = false, bikeMarkers = {};
+        let selectedBikeToRent = null, currentRentedBike = null, rideInterval = null, rideSeconds = 0;
+
+        function enterMap() {
+            switchView('mapSection');
+            if (!isMapInitialized) {
+                map = L.map('map').setView([24.96815, 121.19242], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40, 40], iconAnchor: [20, 40] });
+                for(let bikeId in serverBikeDatabase) { 
+                    if(serverBikeDatabase[bikeId].status === "active") createBikeMarker(bikeId, serverBikeDatabase[bikeId].lat, serverBikeDatabase[bikeId].lng, icon); 
+                }
+                isMapInitialized = true;
+            }
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        }
+
+        function createBikeMarker(id, lat, lng, iconDef) {
+            let marker = L.marker([lat, lng], {icon: iconDef}).addTo(map);
+            marker.on('click', function() {
+                if(currentRentedBike !== null) return alert(t('err_renting'));
+                selectedBikeToRent = id; 
+                document.getElementById('inputPlateNum').value = id; 
+                document.getElementById('inputEPassword').value = ""; 
+                
+                console.log(`[提示/Hint] 您選擇的車號 (Selected ID) ${id}，解鎖密碼為 (Password): ${serverBikeDatabase[id].pwd}`);
+                
+                document.getElementById('rentVerifyPanel').style.display = 'block';
+            });
+            bikeMarkers[id] = marker; 
+        }
+
+        function closeRentPanel() { document.getElementById('rentVerifyPanel').style.display = 'none'; selectedBikeToRent = null; }
+
+        function confirmRent() {
+            let plateNum = document.getElementById('inputPlateNum').value;
+            let ePwd = document.getElementById('inputEPassword').value;
+
+            let balance = parseInt(localStorage.getItem('accountBalance') || '0');
+            if(balance < 5) return alert(t('err_bal'));
+            
+            if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert(t('err_pwd'));
+
+            localStorage.setItem('accountBalance', (balance - 5).toString());
+            closeRentPanel();
+            if (bikeMarkers[plateNum]) { map.removeLayer(bikeMarkers[plateNum]); delete bikeMarkers[plateNum]; }
+
+            alert(t('alt_rent_ok') + (balance - 5) + t('alt_rent_ok2'));
+            currentRentedBike = plateNum;
+            document.getElementById('rentedBikeId').innerText = plateNum;
+            document.getElementById('activeRidePanel').style.display = 'block';
+
+            rideSeconds = 0; document.getElementById('rideTimer').innerText = "00:00";
+            rideInterval = setInterval(() => {
+                rideSeconds++;
+                let m = Math.floor(rideSeconds / 60).toString().padStart(2, '0');
+                let s = (rideSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('rideTimer').innerText = m + ":" + s;
+            }, 1000);
+        }
+
+        function returnBike() {
+            clearInterval(rideInterval);
+            let timeStr = document.getElementById('rideTimer').innerText;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) { finishReturn(pos.coords.latitude, pos.coords.longitude, timeStr); },
+                    function(err) { finishReturn(map.getCenter().lat, map.getCenter().lng, timeStr); }
+                );
+            } else { finishReturn(map.getCenter().lat, map.getCenter().lng, timeStr); }
+        }
+
+        function finishReturn(lat, lng, timeStr) {
+            document.getElementById('activeRidePanel').style.display = 'none';
+            serverBikeDatabase[currentRentedBike].lat = lat; serverBikeDatabase[currentRentedBike].lng = lng;
+            let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
+            createBikeMarker(currentRentedBike, lat, lng, icon); map.setView([lat, lng], 16);
+            
+            let carbonSaved = Math.round(rideSeconds * 1.04); 
+            
+            let currentTotal = parseInt(localStorage.getItem('NCU_TotalCarbon') || '0');
+            let currentDaily = parseInt(localStorage.getItem('NCU_DailyCarbon') || '0');
+            
+            localStorage.setItem('NCU_TotalCarbon', (currentTotal + carbonSaved).toString());
+            localStorage.setItem('NCU_DailyCarbon', (currentDaily + carbonSaved).toString());
+            localStorage.setItem('NCU_CarbonDate', new Date().toLocaleDateString());
+
+            alert(t('alt_ret_ok') + timeStr + t('alt_ret_ok2') + carbonSaved + t('alt_ret_ok3')); 
+            currentRentedBike = null;
+        }
+
+        function enterCarbonPage() {
+            let today = new Date().toLocaleDateString();
+            
+            if (localStorage.getItem('NCU_CarbonDate') !== today) {
+                localStorage.setItem('NCU_DailyCarbon', '0');
+                localStorage.setItem('NCU_CarbonDate', today);
+            }
+
+            document.getElementById('dailyCarbon').innerText = localStorage.getItem('NCU_DailyCarbon') || '0';
+            document.getElementById('totalCarbon').innerText = localStorage.getItem('NCU_TotalCarbon') || '0';
+            
+            switchView('carbonSection');
+        }
+
+        // 初始化預設為繁體中文
+        changeLang('zh');
+    </script>
+</body>
+</html>
