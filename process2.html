@@ -64,12 +64,12 @@
             <h2>🚲 NCU Green Love Bikes</h2>
             <p style="font-size: 12px; color: #666; margin-top: -5px;">中大愛心綠色腳踏車</p>
             <form onsubmit="handleLogin(event)">
-                <div class="input-group"><label>學號 / 帳號</label><input type="text" id="loginId" placeholder="技師請輸入 admin" required></div>
-                <div class="input-group"><label>密碼</label><input type="password" id="loginPwd" placeholder="技師密碼 admin123" required></div>
-                <div id="loginError" style="color:red; display:none; font-size:13px; margin-bottom:10px;">帳密錯誤或未註冊</div>
+                <div class="input-group"><label>學號 / 帳號</label><input type="text" id="loginId" required></div>
+                <div class="input-group"><label>密碼</label><input type="password" id="loginPwd" required></div>
+                <div id="loginError" style="color:red; display:none; font-size:13px; margin-bottom:10px;">帳密錯誤或尚未註冊</div>
                 <button type="submit" class="btn btn-green">登入系統 (Login)</button>
             </form>
-            <div class="link-text" onclick="switchView('registerSection')">還沒有帳號？前往註冊 (Registration)</div>
+            <div class="link-text" onclick="switchView('registerSection')">還沒有帳號？ 前往註冊 (Registration)</div>
             <div class="link-text" style="color: #F44336; margin-top: 5px;" onclick="alert('請聯繫計中或系統管理員重置密碼')">忘記密碼 (Forget password)</div>
         </div>
     </section>
@@ -91,10 +91,6 @@
             <button class="back-btn" onclick="logout()">登出</button>
             <h1>中大愛心綠色腳踏車</h1>
         </header>
-        <div style="background: white; padding: 20px; text-align: center; border-bottom: 1px solid #ddd;">
-            <h2 style="margin: 0; color: #2e7d32; font-size: 18px;">培養誠實、可靠的公民素養</h2>
-            <p style="font-size: 12px; color: gray; margin: 5px 0 0 0;">降低維修成本，終結搭便車效應</p>
-        </div>
         <div class="menu-grid">
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>地圖尋車<br><span style="font-size: 12px; color:gray;">Bicycle rental map</span></h3></div>
             <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3>會員專區<br><span style="font-size: 12px; color:gray;">Members area</span></h3></div>
