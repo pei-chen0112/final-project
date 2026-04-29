@@ -95,10 +95,12 @@
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>地圖尋車<br><span style="font-size: 12px; color:gray;">Bicycle rental map</span></h3></div>
             <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3>會員專區<br><span style="font-size: 12px; color:gray;">Members area</span></h3></div>
             <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3>車輛報修<br><span style="font-size: 12px; color:gray;">Bicycle repair</span></h3></div>
-            <div class="menu-item" enterCarbonPage()="alert('減碳成就功能結算中...\n感謝您為地球盡一份心力！')"><div class="menu-icon">🌍</div><h3>減碳貢獻<br><span style="font-size: 12px; color:gray;">Reduce carbon</span></h3></div>
+            
+            <div class="menu-item" onclick="enterCarbonPage()"><div class="menu-icon">🌍</div><h3>減碳貢獻<br><span style="font-size: 12px; color:gray;">Reduce carbon</span></h3></div>
         </div>
     </section>
-<section id="carbonSection" class="view-section">
+
+    <section id="carbonSection" class="view-section">
         <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>減碳貢獻 (Reduce carbon)</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
             <h3 style="color: #2e7d32; margin-top: 0;">🌍 您的綠色足跡</h3>
@@ -117,6 +119,7 @@
             </div>
         </div>
     </section>
+
     <section id="memberSection" class="view-section">
         <header><button class="back-btn" onclick="switchView('mainMenuSection')">❮ 返回</button><h1>會員專區 (Members area)</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
@@ -431,37 +434,32 @@
             let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
             createBikeMarker(currentRentedBike, lat, lng, icon); map.setView([lat, lng], 16);
             
-            // 🌍 新增：計算節碳量 (每秒約減少 1.04 克 CO2)
+            // 🌍 計算節碳量
             let carbonSaved = Math.round(rideSeconds * 1.04); 
             
-            // 讀取當前儲存的節碳量，並加上這次的數值
             let currentTotal = parseInt(localStorage.getItem('NCU_TotalCarbon') || '0');
             let currentDaily = parseInt(localStorage.getItem('NCU_DailyCarbon') || '0');
             
             localStorage.setItem('NCU_TotalCarbon', (currentTotal + carbonSaved).toString());
             localStorage.setItem('NCU_DailyCarbon', (currentDaily + carbonSaved).toString());
-            // 記錄今天的日期，作為明天重置每日數值的依據
             localStorage.setItem('NCU_CarbonDate', new Date().toLocaleDateString());
 
-            // 結算提示框加上減碳資訊
             alert(`✅ 還車成功！\n騎乘時間：${timeStr}\n🌱 本次為地球減少了 ${carbonSaved} g 的碳排放！`); 
             currentRentedBike = null;
         }
-        // --- 新增：減碳專區邏輯 ---
+
+        // --- 7. 減碳專區邏輯 ---
         function enterCarbonPage() {
             let today = new Date().toLocaleDateString();
             
-            // 如果儲存的日期不是今天，就把「每日節碳量」歸零
             if (localStorage.getItem('NCU_CarbonDate') !== today) {
                 localStorage.setItem('NCU_DailyCarbon', '0');
                 localStorage.setItem('NCU_CarbonDate', today);
             }
 
-            // 將儲存的數值顯示在畫面上
             document.getElementById('dailyCarbon').innerText = localStorage.getItem('NCU_DailyCarbon') || '0';
             document.getElementById('totalCarbon').innerText = localStorage.getItem('NCU_TotalCarbon') || '0';
             
-            // 切換畫面
             switchView('carbonSection');
         }
     </script>
