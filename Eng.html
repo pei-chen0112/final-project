@@ -292,12 +292,16 @@
             const id = document.getElementById('loginId').value;
             const pwd = document.getElementById('loginPwd').value;
 
+            // 技師隱藏帳號
             if (id === 'admin' && pwd === 'admin123') {
                 currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); return;
             }
 
+            // 比對瀏覽器 localStorage 裡面的註冊資料
             if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
-                currentUser = id; document.getElementById('loginError').style.display = 'none'; switchView('mainMenuSection');
+                currentUser = id; 
+                document.getElementById('loginError').style.display = 'none'; 
+                switchView('mainMenuSection');
             } else { 
                 document.getElementById('loginError').innerText = t('err_login');
                 document.getElementById('loginError').style.display = 'block'; 
