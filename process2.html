@@ -22,7 +22,11 @@
         .card h2 { color: #2e7d32; margin-top: 0; }
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; font-size: 14px; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fff; }
+        
+        /* 特別調整檔案上傳欄位的樣式 */
+        input[type="file"] { font-size: 13px; padding: 8px; cursor: pointer; }
+        
         .btn-green { background-color: #2e7d32; } .btn-green:hover { background-color: #1b5e20; }
         .btn-orange { background-color: #ff9800; } .btn-orange:hover { background-color: #e68a00; }
         .btn-red { background-color: #F44336; } .btn-red:hover { background-color: #D32F2F; }
@@ -95,7 +99,6 @@
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3>地圖尋車<br><span style="font-size: 12px; color:gray;">Bicycle rental map</span></h3></div>
             <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3>會員專區<br><span style="font-size: 12px; color:gray;">Members area</span></h3></div>
             <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3>車輛報修<br><span style="font-size: 12px; color:gray;">Bicycle repair</span></h3></div>
-            
             <div class="menu-item" onclick="enterCarbonPage()"><div class="menu-icon">🌍</div><h3>減碳貢獻<br><span style="font-size: 12px; color:gray;">Reduce carbon</span></h3></div>
         </div>
     </section>
@@ -133,8 +136,35 @@
                     2. 註冊系統並安裝 GPS 電子鎖。<br>
                     技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
                 </p>
-                <button class="btn btn-green" onclick="submitBikeApproval()">送出線上回收申請</button>
+                <!-- 💡 修改這裡：點擊後前往「上傳照片頁面」 -->
+                <button class="btn btn-green" onclick="switchView('uploadBikeSection')">前往填寫回收申請單</button>
             </div>
+        </div>
+    </section>
+
+    <!-- 💡 新增：上傳 3 張照片的專屬頁面 -->
+    <section id="uploadBikeSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('memberSection')">❮ 返回</button><h1>車輛照片上傳</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="color: #2e7d32; margin-top: 0;">📸 提供車輛檢測照片</h3>
+            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.5; margin-bottom: 20px;">
+                為確保車輛符合改裝標準，請上傳 3 張清晰的車輛照片。審核通過後，方可牽至修理站。
+            </p>
+            
+            <div class="input-group">
+                <label>1. 車輛正面照</label>
+                <input type="file" id="bikePic1" accept="image/*">
+            </div>
+            <div class="input-group">
+                <label>2. 車輛側面照</label>
+                <input type="file" id="bikePic2" accept="image/*">
+            </div>
+            <div class="input-group">
+                <label>3. 局部特寫 / 損壞處</label>
+                <input type="file" id="bikePic3" accept="image/*">
+            </div>
+            
+            <button class="btn btn-orange" onclick="confirmBikeUpload()">確認上傳並送出申請</button>
         </div>
     </section>
 
@@ -155,7 +185,7 @@
         </header>
         <div class="admin-panel">
             <div class="admin-card">
-                <h3>🚲 待改裝與註冊車輛 (Reclaim abandoned bikes)</h3>
+                <h3>🚲 待改裝與註冊車輛 (已附照片)</h3>
                 <table><thead><tr><th>申請學生</th><th>申請時間</th><th>操作</th></tr></thead><tbody id="adminApprovalTable"></tbody></table>
             </div>
             <div class="admin-card" style="border-left-color: #F44336;">
@@ -200,7 +230,7 @@
         let repairQueue = [], approvalQueue = [], currentUser = ""; 
         let validPromoCodes = { "SDGS-2024": { amount: 50, used: false }, "PROFESSOR-100": { amount: 100, used: false } };
 
-        // 10秒自動刷新密碼 (印在 Console 中供開發者/教授測試看)
+        // 10秒自動刷新密碼
         setInterval(() => {
             console.log("🔄 車輛動態密碼已刷新：");
             for (let bikeId in serverBikeDatabase) { 
@@ -289,9 +319,27 @@
         }
 
         // --- 4. O2O 提供車輛與報修 (學生端) ---
-        function submitBikeApproval() {
+        
+        // 💡 新增：處理照片上傳與驗證邏輯
+        function confirmBikeUpload() {
+            let pic1 = document.getElementById('bikePic1').value;
+            let pic2 = document.getElementById('bikePic2').value;
+            let pic3 = document.getElementById('bikePic3').value;
+
+            // 檢查是否三個欄位都有選擇檔案
+            if (!pic1 || !pic2 || !pic3) {
+                return alert("❌ 請務必上傳滿 3 張車輛照片才能送出申請！");
+            }
+
+            // 清空選擇的檔案，讓下次點進來是乾淨的
+            document.getElementById('bikePic1').value = "";
+            document.getElementById('bikePic2').value = "";
+            document.getElementById('bikePic3').value = "";
+
+            // 將申請加入陣列（模擬傳給後端）
             approvalQueue.push({ id: Date.now(), studentId: currentUser, time: new Date().toLocaleTimeString() });
-            alert("✅ 申請已送出！請牽車至修理站進行規格改裝與註冊系統。"); switchView('mainMenuSection');
+            alert("✅ 照片與申請已送出！請牽車至修理站進行規格改裝與註冊系統。"); 
+            switchView('mainMenuSection');
         }
 
         function submitRepair() {
@@ -319,7 +367,7 @@
             let approvalHtml = "";
             if (approvalQueue.length === 0) approvalHtml = "<tr><td colspan='3' style='text-align:center; color:gray;'>無待安裝車輛</td></tr>";
             approvalQueue.forEach((item, i) => {
-                approvalHtml += `<tr><td>${item.studentId}</td><td>${item.time}</td>
+                approvalHtml += `<tr><td>${item.studentId}</td><td>${item.time}<br><span style="color:#2e7d32;font-size:11px;">(已審核3張照片)</span></td>
                 <td><button class="action-btn btn-approve" onclick="approveBike(${i}, '${item.studentId}')">完成改裝註冊 (發送獎勵)</button>
                 <button class="action-btn btn-reject" onclick="rejectBike(${i})">退回</button></td></tr>`;
             });
@@ -434,7 +482,6 @@
             let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40,40], iconAnchor: [20,40] });
             createBikeMarker(currentRentedBike, lat, lng, icon); map.setView([lat, lng], 16);
             
-            // 🌍 計算節碳量
             let carbonSaved = Math.round(rideSeconds * 1.04); 
             
             let currentTotal = parseInt(localStorage.getItem('NCU_TotalCarbon') || '0');
@@ -448,7 +495,6 @@
             currentRentedBike = null;
         }
 
-        // --- 7. 減碳專區邏輯 ---
         function enterCarbonPage() {
             let today = new Date().toLocaleDateString();
             
