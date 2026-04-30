@@ -91,8 +91,8 @@
     <section id="loginSection" class="view-section active-view auth-container" style="position: relative;">
         <div class="lang-switch">
             <select onchange="changeLang(this.value)">
-                <option value="zh">🇹🇼 中文</option>
-                <option value="en">🇺🇸 EN</option>
+                <option value="zh">中文</option>
+                <option value="en">English</option>
             </select>
         </div>
 
@@ -136,33 +136,33 @@
     </section>
 
     <section id="carbonSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="carbon_title">減碳貢獻 (Reduce carbon)</h1></header>
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="carbon_title">減碳貢獻</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
             <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="carbon_h3">🌍 您的綠色足跡</h3>
             <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.6;" data-i18n="carbon_p">
                 依據歐洲自行車聯盟 (ECF) 研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。
             </p>
             <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center;">
-                <p style="margin: 0; color: #2e7d32; font-size: 14px;" data-i18n="carbon_today">本日節碳量 (Today)</p>
+                <p style="margin: 0; color: #2e7d32; font-size: 14px;" data-i18n="carbon_today">本日節碳量</p>
                 <h2 style="margin: 5px 0; color: #1b5e20; font-size: 36px;"><span id="dailyCarbon">0</span> <span style="font-size:16px;">g</span></h2>
             </div>
             <div style="background: #f4f4f9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center; border: 1px solid #ddd;">
-                <p style="margin: 0; color: #555; font-size: 14px;" data-i18n="carbon_total">累積總節碳量 (Total)</p>
+                <p style="margin: 0; color: #555; font-size: 14px;" data-i18n="carbon_total">累積總節碳量</p>
                 <h2 style="margin: 5px 0; color: #333; font-size: 36px;"><span id="totalCarbon">0</span> <span style="font-size:16px;">g</span></h2>
             </div>
         </div>
     </section>
 
     <section id="memberSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="member_title">會員專區 (Members area)</h1></header>
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="member_title">會員專區</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
             <div id="memberDisplay" style="width: 100%;"></div>
             <div class="upload-box" style="margin-top: 30px;">
-                <h4 style="margin-top: 0; color: #2e7d32;" data-i18n="reclaim_title">🚲 回收校園廢棄車輛 (SDG Goals)</h4>
+                <h4 style="margin-top: 0; color: #2e7d32;" data-i18n="reclaim_title">🚲 回收校園廢棄車輛 </h4>
                 <p style="font-size: 13px; color: #555; line-height: 1.5;" data-i18n="reclaim_desc">
                     1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
                 </p>
-                <button class="btn btn-green" onclick="switchView('uploadBikeSection')" data-i18n="reclaim_btn">前往填寫回收申請單 (Fill Reclaim Form)</button>
+                <button class="btn btn-green" onclick="switchView('uploadBikeSection')" data-i18n="reclaim_btn">前往填寫回收申請單</button>
             </div>
         </div>
     </section>
@@ -193,7 +193,7 @@
     </section>
 
     <section id="repairSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="repair_title">車輛報修 (Bicycle repair)</h1></header>
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="repair_title">車輛報修</h1></header>
         <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
             <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;" data-i18n="repair_warn">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
             <div class="input-group"><label data-i18n="rep_id_label">故障車牌號碼</label><input type="text" id="repairBikeId" data-i18n-ph="rep_id_ph" placeholder="例如: NCU-001"></div>
@@ -216,7 +216,7 @@
                 </table>
             </div>
             <div class="admin-card" style="border-left-color: #F44336;">
-                <h3 data-i18n="admin_rep_title">🔧 待修復車輛清單 (Report a broken bicycle)</h3>
+                <h3 data-i18n="admin_rep_title">🔧 待修復車輛清單</h3>
                 <table>
                     <thead><tr><th data-i18n="th_bike">報修車號</th><th data-i18n="th_desc">損壞描述</th><th data-i18n="th_action">操作</th></tr></thead>
                     <tbody id="adminRepairTable"></tbody>
@@ -226,7 +226,7 @@
     </section>
 
     <section id="mapSection" class="view-section" style="position: relative;">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 主選單</button><h1 data-i18n="map_title">地圖尋車 (Bicycle rental map)</h1></header>
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 主選單</button><h1 data-i18n="map_title">地圖尋車</h1></header>
         <div id="map"></div>
 
         <div id="rentVerifyPanel">
@@ -254,15 +254,15 @@
         // ==========================================
         const translations = {
             zh: {
-                login_sub: "中大愛心綠色腳踏車", id_label: "學號 / 帳號", pwd_label: "密碼", id_ph: "技師請輸入 admin", pwd_ph: "技師密碼 admin123", login_btn: "登入系統 (Login)", go_reg: "還沒有帳號？ 前往註冊 (Registration)", forget_pwd: "忘記密碼 (Forget password)",
-                reg_title: "📝 新增學生帳號", reg_id_label: "設定學號", reg_pwd_label: "設定密碼", reg_btn: "立即開通帳號 (Registration)", back_login: "返回登入 (Login)",
+                login_sub: "中大愛心綠色腳踏車", id_label: "學號 / 帳號", pwd_label: "密碼", id_ph: "技師請輸入 admin", pwd_ph: "技師密碼 admin123", login_btn: "登入系統 (Login)", go_reg: "還沒有帳號？ 前往註冊", forget_pwd: "忘記密碼",
+                reg_title: "📝 新增學生帳號", reg_id_label: "設定學號", reg_pwd_label: "設定密碼", reg_btn: "立即開通帳號", back_login: "返回登入",
                 logout: "登出", menu_title: "中大愛心綠色腳踏車", menu_map: "地圖尋車<br><span style='font-size: 12px; color:gray;'>Bicycle rental map</span>", menu_member: "會員專區<br><span style='font-size: 12px; color:gray;'>Members area</span>", menu_repair: "車輛報修<br><span style='font-size: 12px; color:gray;'>Bicycle repair</span>", menu_carbon: "減碳貢獻<br><span style='font-size: 12px; color:gray;'>Reduce carbon</span>",
-                back: "❮ 返回", carbon_title: "減碳貢獻 (Reduce carbon)", carbon_h3: "🌍 您的綠色足跡", carbon_p: "依據歐洲自行車聯盟 (ECF) 研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。", carbon_today: "本日節碳量 (Today)", carbon_total: "累積總節碳量 (Total)",
-                member_title: "會員專區 (Members area)", wallet_title: "會員帳戶餘額", linepay_btn: "💬 LINE Pay 儲值", promo_btn: "🎁 序號兌換", reclaim_title: "🚲 回收校園廢棄車輛 (SDG Goals)", reclaim_desc: "1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！", reclaim_btn: "前往填寫回收申請單 (Fill Reclaim Form)",
-                upload_title: "車輛照片上傳 (Upload Photos)", upload_h3: "📸 提供車輛檢測照片", upload_desc: "為確保車輛符合改裝標準，請上傳 3 張清晰的車輛照片。審核通過後，方可牽至修理站。", pic1_label: "1. 車輛正面照", pic2_label: "2. 車輛側面照", pic3_label: "3. 局部特寫 / 損壞處", upload_submit: "確認上傳並送出申請", err_upload: "❌ 請務必上傳滿 3 張車輛照片才能送出申請！", alt_upload_ok: "✅ 照片與申請已送出！請隨時至會員專區查看審核進度。",
-                repair_title: "車輛報修 (Bicycle repair)", repair_warn: "⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。", rep_id_label: "故障車牌號碼", rep_id_ph: "例如: NCU-001", rep_desc_label: "損壞狀況描述", rep_desc_ph: "例如: 煞車失靈", repair_btn: "通報損壞腳踏車",
-                admin_title: "👨‍🔧 腳踏車修理站 - 技師管理後台", admin_appr_title: "🚲 待改裝與註冊車輛 (已附照片)", th_student: "申請學生", th_time: "申請時間", th_action: "操作", admin_rep_title: "🔧 待修復車輛清單 (Report a broken bicycle)", th_bike: "報修車號", th_desc: "損壞描述",
-                map_title: "地圖尋車 (Bicycle rental map)", unlock_title: "解鎖車輛", unlock_desc: "無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style='color:#0072C6;'>$5</strong>", plate_label: "車牌號碼", pwd_warn: "*請查看實體腳踏車電子螢幕上的 4 位數密碼", pwd_ph2: "輸入電子密碼", unlock_btn: "帳戶餘額付款並解鎖", cancel_btn: "取消", riding_title: "🚲 騎乘中：", gps_monitor: "GPS 追蹤監控運行中", return_btn: "⏹️ 結束騎乘並 GPS 還車",
+                back: "❮ 返回", carbon_title: "減碳貢獻 (Reduce carbon)", carbon_h3: "🌍 您的綠色足跡", carbon_p: "依據歐洲自行車聯盟 (ECF) 研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。", carbon_today: "本日節碳量", carbon_total: "累積總節碳量",
+                member_title: "會員專區", wallet_title: "會員帳戶餘額", linepay_btn: "💬 LINE Pay 儲值", promo_btn: "🎁 序號兌換", reclaim_title: "🚲 回收校園廢棄車輛", reclaim_desc: "1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！", reclaim_btn: "前往填寫回收申請單",
+                upload_title: "車輛照片上傳", upload_h3: "📸 提供車輛檢測照片", upload_desc: "為確保車輛符合改裝標準，請上傳 3 張清晰的車輛照片。審核通過後，方可牽至修理站。", pic1_label: "1. 車輛正面照", pic2_label: "2. 車輛側面照", pic3_label: "3. 局部特寫 / 損壞處", upload_submit: "確認上傳並送出申請", err_upload: "❌ 請務必上傳滿 3 張車輛照片才能送出申請！", alt_upload_ok: "✅ 照片與申請已送出！請隨時至會員專區查看審核進度。",
+                repair_title: "車輛報修", repair_warn: "⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。", rep_id_label: "故障車牌號碼", rep_id_ph: "例如: NCU-001", rep_desc_label: "損壞狀況描述", rep_desc_ph: "例如: 煞車失靈", repair_btn: "通報損壞腳踏車",
+                admin_title: "👨‍🔧 腳踏車修理站 - 技師管理後台", admin_appr_title: "🚲 待改裝與註冊車輛 (已附照片)", th_student: "申請學生", th_time: "申請時間", th_action: "操作", admin_rep_title: "🔧 待修復車輛清單", th_bike: "報修車號", th_desc: "損壞描述",
+                map_title: "地圖尋車", unlock_title: "解鎖車輛", unlock_desc: "無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style='color:#0072C6;'>$5</strong>", plate_label: "車牌號碼", pwd_warn: "*請查看實體腳踏車電子螢幕上的 4 位數密碼", pwd_ph2: "輸入電子密碼", unlock_btn: "帳戶餘額付款並解鎖", cancel_btn: "取消", riding_title: "🚲 騎乘中：", gps_monitor: "GPS 追蹤監控運行中", return_btn: "⏹️ 結束騎乘並 GPS 還車",
                 // JS Alerts / Dynamic Data
                 alt_forget: "請聯繫計中或系統管理員重置密碼", alt_reg_ok: "✅ 註冊成功！請登入系統。", prompt_linepay: "請輸入想透過 LINE Pay 儲值的金額 (例如: 50, 100)：", err_amount: "❌ 請輸入有效的金額！", alt_line_wait: "🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)", cfm_linepay_1: "【LINE Pay 模擬畫面】\n是否確認支付 NT$ ", cfm_linepay_2: " ？", alt_line_ok: "✅ LINE Pay 交易成功！", alt_cancel: "❌ 交易已取消。", prompt_promo: "請輸入您的點數儲值序號：", err_promo_used: "❌ 兌換失敗：此序號已被使用過了！", alt_promo_ok: "🎉 兌換成功！獲得 ", alt_promo_ok2: " 元儲值金！", err_promo_invalid: "❌ 兌換失敗：無效的序號！", err_empty: "請填寫完整資訊！", alt_rep_ok: "✅ 已通報並下線該車輛！請牽至修理站。", alt_fix_ok: "✅ 車輛 ", alt_fix_ok2: " 已修復重新上架！", err_renting: "❌ 您已經有一台租借中的車輛！", err_bal: "❌ 帳戶餘額不足 (單次騎乘需 $5)！請先至會員專區儲值。", err_pwd: "❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。", alt_rent_ok: "✅ 付款成功！已扣款 $5 (餘額 $", alt_rent_ok2: ")。\n車輛解鎖，開始計時！", alt_ret_ok: "✅ 還車成功！\n騎乘時間：", alt_ret_ok2: "\n🌱 本次為地球減少了 ", alt_ret_ok3: " g 的碳排放！", empty_rep: "無待修車輛", empty_appr: "無待安裝車輛", btn_fix: "修復上架", err_login: "帳密錯誤或尚未註冊"
             },
