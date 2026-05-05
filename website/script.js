@@ -8,9 +8,11 @@
                  img_caption1: "回憶中穿梭在松林間的翠綠身影",
                  story_p1: "如果你是在 2010 年左右漫步在中央大學的校園，你一定會注意到那一抹穿梭在松林間的鮮豔色彩——「中央小綠綠」。",
                  story_sub1: "什麼是「中央小綠綠」？",
-                 story_p2: "「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫... (此處省略部分文字)",
+                 story_p2: "「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫。在那個 YouBike 尚未普及的年代，學校為了推廣低碳校園、減輕校內機車負擔，特別購置了一批翠綠色的單車。這些腳踏車採取「公共共享」的概念，讓學生與教職員能自由騎乘於教學區、宿舍與餐廳之間，是許多中大人心中共同的校園標誌。",
                  story_sub2: "我們的目標：復活綠色傳奇",
-                 story_p3: "雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘...",
+                 story_p3: "然而，隨著時間推移，車輛損耗、維護經費不足以及管理機制等挑戰，讓這群綠色身影逐漸消失在校園的角落，最終走入了歷史。",
+                 story_p4:"雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘。在 2026 年的今天，面對氣候變遷與減碳轉型的浪潮，我們立志要「復活中央小綠綠計畫」。",
+                 story_p5:"我們不只是想帶回那輛腳踏車，更是要結合現代的數位管理與社群力量：",
                   goal_1: "<strong>優化管理：</strong> 引入智慧門鎖與 App 追蹤，解決當年車輛遺失與維修不明的問題。",
                   goal_2: "<strong>循環經濟：</strong> 建立校內維修社群，讓修車成為一種技能傳承，減少資源浪費。",
                    goal_3: "<strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。",
@@ -29,7 +31,11 @@
                 appr_photo_msg: "(已審核3張照片)", btn_approve: "通過核准", btn_reject: "退回", prompt_reject: "請輸入退回/未通過原因：\n(例如：照片不清晰、非校園內車輛)", default_reject: "照片不清晰或不符規格", alt_reject_ok: "❌ 已退回該筆申請。", alt_approve_ok1: "✅ 已核准！發配車牌【", alt_approve_ok2: "】。\n已標記為審核通過並發放獎勵金！",
                 btn_login_nav: "登入",
                 btn_logout_nav: "登出系統",
-                btn_switch_nav: "切換帳號"
+                btn_switch_nav: "切換帳號",
+                nav_donate: "捐車規範",
+                 nav_guide: "使用說明",
+                 nav_contact: "聯絡我們",
+                 nav_faq: "常見問題"
             },
             en: {
                 story_title: "Make Campus 'Green' Again: Reliving the NCU Green Bike Memories",
@@ -57,7 +63,11 @@
                 appr_photo_msg: "(3 Photos Checked)", btn_approve: "Approve", btn_reject: "Reject", prompt_reject: "Enter reason for rejection:\n(e.g., Unclear photos, not a campus bike)", default_reject: "Unclear photos or does not meet standards", alt_reject_ok: "❌ Application rejected.", alt_approve_ok1: "✅ Approved! Plate issued [", alt_approve_ok2: "].\nBonus credited to user account!",
                 btn_login_nav: "Login",
                 btn_logout_nav: "Logout",
-                btn_switch_nav: "Switch Account"        
+                btn_switch_nav: "Switch Account",
+                nav_donate: "Donation Rules",
+        nav_guide: "User Guide",
+        nav_contact: "Contact Us",
+        nav_faq: "FAQ"        
             }
         };
 

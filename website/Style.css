@@ -129,15 +129,23 @@
     display: block;
 }
 .story-section {
+    width: 90%;
     max-width: 700px;
-    margin: 0 auto;
+    margin: 0 auto; /* 保持原本的水平置中邏輯 */
+    
+    /* 使用相對定位來微調位置 */
+    position: relative; 
+    left: 48px; /* 這裡的數值越大，文章就越往右移 */
+
+    /* 以下維持原有的美化樣式 */
     padding: 20px;
     background: white;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    text-align: left; /* 文字靠左對齊 */
-    line-height: 1.8; /* 增加行距 */
+    text-align: left;
+    line-height: 1.8;
     color: #444;
+    box-sizing: border-box;
 }
 
 .story-title {
@@ -274,4 +282,42 @@
 .content-area {
     padding: 20px;
     margin-right: 100px; /* 留出右側選單的空間 */
+}
+/* 頂部橫排選單容器 */
+.top-navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 15px 0;
+    width: 100%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* 修改導航連結容器，使其與文章寬度對齊 */
+.nav-links {
+    list-style: none;
+    display: flex;
+    justify-content: space-between; /* 改用 space-between 讓兩端剛好對齊文章左右邊緣 */
+    
+    /* 關鍵點：寬度設定必須與 .story-section 的 700px 一致 */
+    max-width: 700px; 
+    
+    margin: 0 auto; /* 水平置中 */
+    padding: 0 20px; /* 加上與文章相同的左右內距，確保視覺上完全對齊 */
+    box-sizing: border-box; /* 確保 padding 不會撐大總寬度 */
+}
+
+.nav-links li {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2e7d32;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    /* 移除額外的 padding，讓文字邊緣對齊邊界 */
+    padding: 0; 
+}
+
+/* 為了美觀，懸停效果改為顏色變化或底線，以免背景色塊破壞對齊感 */
+.nav-links li:hover {
+    color: #1b5e20;
+    text-decoration: underline;
 }
