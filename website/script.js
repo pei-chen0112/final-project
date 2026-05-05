@@ -4,6 +4,16 @@
         // ==========================================
         const translations = {
             zh: {
+                  story_title: "讓校園再次「綠」起來：重拾中央小綠綠的單車回憶",
+                 img_caption1: "回憶中穿梭在松林間的翠綠身影",
+                 story_p1: "如果你是在 2010 年左右漫步在中央大學的校園，你一定會注意到那一抹穿梭在松林間的鮮豔色彩——「中央小綠綠」。",
+                 story_sub1: "什麼是「中央小綠綠」？",
+                 story_p2: "「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫... (此處省略部分文字)",
+                 story_sub2: "我們的目標：復活綠色傳奇",
+                 story_p3: "雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘...",
+                  goal_1: "<strong>優化管理：</strong> 引入智慧門鎖與 App 追蹤，解決當年車輛遺失與維修不明的問題。",
+                  goal_2: "<strong>循環經濟：</strong> 建立校內維修社群，讓修車成為一種技能傳承，減少資源浪費。",
+                   goal_3: "<strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。",
                 login_sub: "中大愛心綠色腳踏車", id_label: "學號 / 帳號", pwd_label: "密碼", id_ph: "技師請輸入 admin", pwd_ph: "技師密碼 admin123", login_btn: "登入系統", go_reg: "還沒有帳號？ 前往註冊", forget_pwd: "忘記密碼",
                 reg_title: "📝 新增學生帳號", reg_id_label: "設定學號", reg_pwd_label: "設定密碼", reg_btn: "立即開通帳號", back_login: "返回登入",
                 logout: "登出", menu_title: "中大愛心綠色腳踏車", menu_map: "地圖尋車", menu_member: "會員專區", menu_repair: "車輛報修", menu_carbon: "減碳貢獻",
@@ -16,9 +26,22 @@
                 // JS Alerts / Dynamic Data
                 alt_forget: "請聯繫計中或系統管理員重置密碼", alt_reg_ok: "✅ 註冊成功！請登入系統。", prompt_linepay: "請輸入想透過 LINE Pay 儲值的金額 (例如: 50, 100)：", err_amount: "❌ 請輸入有效的金額！", alt_line_wait: "🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)", cfm_linepay_1: "【LINE Pay 模擬畫面】\n是否確認支付 台幣 ", cfm_linepay_2: " 元？", alt_line_ok: "✅ LINE Pay 交易成功！", alt_cancel: "❌ 交易已取消。", prompt_promo: "請輸入您的點數儲值序號：", err_promo_used: "❌ 兌換失敗：此序號已被使用過了！", alt_promo_ok: "🎉 兌換成功！獲得 ", alt_promo_ok2: " 元儲值金！", err_promo_invalid: "❌ 兌換失敗：無效的序號！", err_empty: "請填寫完整資訊！", alt_rep_ok: "✅ 已通報並下線該車輛！請牽至修理站。", alt_fix_ok: "✅ 車輛 ", alt_fix_ok2: " 已修復重新上架！", err_renting: "❌ 您已經有一台租借中的車輛！", err_bal: "❌ 帳戶餘額不足 (單次騎乘需 5 元)！請先至會員專區儲值。", err_pwd: "❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。", alt_rent_ok: "✅ 付款成功！已扣款 5 元 (餘額 ", alt_rent_ok2: " 元)。\n車輛解鎖，開始計時！", alt_ret_ok: "✅ 還車成功！\n騎乘時間：", alt_ret_ok2: "\n🌱 本次為地球減少了 ", alt_ret_ok3: " 克的碳排放！", empty_rep: "無待修車輛", empty_appr: "無待安裝車輛", btn_fix: "修復上架", err_login: "帳密錯誤或尚未註冊", 
                 history_title: "📜 廢棄車回收申請紀錄", history_time: "時間", history_status: "狀態", history_reason: "備註 / 原因", no_history: "尚無申請紀錄", pending: "⏳ 審核中", approved: "✅ 已通過", rejected: "❌ 未通過", bonus_sent: "已發放 $50", 
-                appr_photo_msg: "(已審核3張照片)", btn_approve: "通過核准", btn_reject: "退回", prompt_reject: "請輸入退回/未通過原因：\n(例如：照片不清晰、非校園內車輛)", default_reject: "照片不清晰或不符規格", alt_reject_ok: "❌ 已退回該筆申請。", alt_approve_ok1: "✅ 已核准！發配車牌【", alt_approve_ok2: "】。\n已標記為審核通過並發放獎勵金！"
+                appr_photo_msg: "(已審核3張照片)", btn_approve: "通過核准", btn_reject: "退回", prompt_reject: "請輸入退回/未通過原因：\n(例如：照片不清晰、非校園內車輛)", default_reject: "照片不清晰或不符規格", alt_reject_ok: "❌ 已退回該筆申請。", alt_approve_ok1: "✅ 已核准！發配車牌【", alt_approve_ok2: "】。\n已標記為審核通過並發放獎勵金！",
+                btn_login_nav: "登入",
+                btn_logout_nav: "登出系統",
+                btn_switch_nav: "切換帳號"
             },
             en: {
+                story_title: "Make Campus 'Green' Again: Reliving the NCU Green Bike Memories",
+        img_caption1: "The vibrant green bikes cruising through the pine trees.",
+        story_p1: "If you strolled through NCU around 2010, you surely noticed that flash of green color among the pine trees—the 'NCU Green Bike'.",
+        story_sub1: "What is 'NCU Green Bike'?",
+        story_p2: "The 'NCU Green Bike' was a campus bike-sharing project launched around 2010. In an era before YouBike was popular, the university purchased a fleet of emerald-green bicycles to promote a low-carbon campus.",
+        story_sub2: "Our Goal: Reviving the Green Legend",
+        story_p3: "Though the original project ended, the vision of campus sustainability should not be forgotten. In 2026, we aim to revive the NCU Green Bike project.",
+        goal_1: "<strong>Better Management:</strong> Smart locks and App tracking to prevent loss and track maintenance.",
+        goal_2: "<strong>Circular Economy:</strong> A repair community to pass on skills and reduce waste.",
+        goal_3: "<strong>Low-Carbon Life:</strong> Making cycling the top choice for commuting on campus once again.",
                 login_sub: "NCU Green Love Bikes", id_label: "Student ID / Account", pwd_label: "Password", id_ph: "Tech enter admin", pwd_ph: "Tech pwd admin123", login_btn: "Login", go_reg: "No account? Registration", forget_pwd: "Forget password",
                 reg_title: "📝 Create Account", reg_id_label: "Student ID", reg_pwd_label: "Set Password", reg_btn: "Registration", back_login: "Back to Login",
                 logout: "Logout", menu_title: "NCU Green Love Bikes", menu_map: "Find a Bike", menu_member: "Member Area", menu_repair: "Report Repair", menu_carbon: "Reduce Carbon",
@@ -31,7 +54,10 @@
                 // JS Alerts / Dynamic Data
                 alt_forget: "Please contact the admin to reset your password.", alt_reg_ok: "✅ Registration successful! Please login.", prompt_linepay: "Enter LINE Pay top-up amount (e.g., 50, 100):", err_amount: "❌ Invalid amount!", alt_line_wait: "🔄 Redirecting to LINE Pay...\n(Please wait 1.5s)", cfm_linepay_1: "[LINE Pay Simulation]\nConfirm payment of NT$ ", cfm_linepay_2: " ?", alt_line_ok: "✅ LINE Pay successful!", alt_cancel: "❌ Transaction canceled.", prompt_promo: "Enter promo code:", err_promo_used: "❌ Promo code already used!", alt_promo_ok: "🎉 Success! You received $", alt_promo_ok2: " bonus!", err_promo_invalid: "❌ Invalid promo code!", err_empty: "Please fill in all fields!", alt_rep_ok: "✅ Reported and taken offline! Bring bike to station.", alt_fix_ok: "✅ Bike ", alt_fix_ok2: " fixed and online!", err_renting: "❌ You already have an active rental!", err_bal: "❌ Insufficient balance ($5 required)! Top up in Member Area.", err_pwd: "❌ Invalid password! Check the physical bike screen.", alt_rent_ok: "✅ Payment success! Deducted $5 (Balance $", alt_rent_ok2: ").\nBike unlocked, timer started!", alt_ret_ok: "✅ Return successful!\nDuration: ", alt_ret_ok2: "\n🌱 You saved ", alt_ret_ok3: " g of carbon emissions!", empty_rep: "No pending repairs", empty_appr: "No pending applications", btn_fix: "Fixed & Online", err_login: "Invalid ID/Password or Unregistered",
                 history_title: "📜 Reclaim Application History", history_time: "Time", history_status: "Status", history_reason: "Reason", no_history: "No records found", pending: "⏳ Pending", approved: "✅ Approved", rejected: "❌ Rejected", bonus_sent: "$50 Credited",
-                appr_photo_msg: "(3 Photos Checked)", btn_approve: "Approve", btn_reject: "Reject", prompt_reject: "Enter reason for rejection:\n(e.g., Unclear photos, not a campus bike)", default_reject: "Unclear photos or does not meet standards", alt_reject_ok: "❌ Application rejected.", alt_approve_ok1: "✅ Approved! Plate issued [", alt_approve_ok2: "].\nBonus credited to user account!"
+                appr_photo_msg: "(3 Photos Checked)", btn_approve: "Approve", btn_reject: "Reject", prompt_reject: "Enter reason for rejection:\n(e.g., Unclear photos, not a campus bike)", default_reject: "Unclear photos or does not meet standards", alt_reject_ok: "❌ Application rejected.", alt_approve_ok1: "✅ Approved! Plate issued [", alt_approve_ok2: "].\nBonus credited to user account!",
+                btn_login_nav: "Login",
+                btn_logout_nav: "Logout",
+                btn_switch_nav: "Switch Account"        
             }
         };
 
@@ -48,7 +74,9 @@
             });
             if (document.getElementById('memberSection').classList.contains('active-view')) renderMemberCenter();
             if (document.getElementById('adminSection').classList.contains('active-view')) renderAdminDashboard();
-        }
+            renderUserMenu(); 
+}
+        
 
         // ==========================================
         // 核心邏輯
@@ -97,7 +125,7 @@
              if (!currentUser) {
         // 未登入狀態：顯示登入按鈕
         menuContainer.innerHTML = `
-            <button class="user-btn" onclick="switchView('loginSection')">登入</button>
+            <button class="user-btn" onclick="switchView('loginSection')">${t('btn_login_nav')}</button>
         `;
          } else {
         // 已登入狀態：顯示帳號下拉選單
@@ -108,8 +136,8 @@
                     ${displayName} ▾
                 </button>
                 <div class="dropdown-content">
-                    <div onclick="logout()">登出系統</div>
-                    <div onclick="switchAccount()">切換帳號</div>
+                    <div onclick="logout()">${t('btn_logout_nav')}</div>
+                    <div onclick="switchAccount()">${t('btn_switch_nav')}</div>
                 </div>
             </div>
                  `;

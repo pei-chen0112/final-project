@@ -10,14 +10,14 @@
    
 </head>
 <body>
-
-    <section id="loginSection" class="view-section auth-container" style="position: relative;">
-        <div class="lang-switch">
+    <div class="lang-switch">
             <select onchange="changeLang(this.value)">
                 <option value="zh">🇹🇼 中文</option>
                 <option value="en">🇺🇸 English</option>
             </select>
         </div>
+    <section id="loginSection" class="view-section auth-container" style="position: relative;">
+        
 
         <div class="card">
             <h2>🚲 NCU Green Love Bikes</h2>
@@ -46,19 +46,64 @@
     </section>
 
     <section id="mainMenuSection" class="view-section active-view">
-        <header>
-    <!-- 左上角使用者選單容器 -->
-    <div class="user-menu-container" id="userMenu">
-        <!-- 內容會由 JavaScript 動態產生成「登入」或「使用者頭像」 -->
-    </div>
-    <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
-</header>
-        <div class="menu-grid">
-            <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3 data-i18n="menu_map">地圖尋車</h3></div>
-            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3 data-i18n="menu_member">會員專區</h3></div>
-            <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3 data-i18n="menu_repair">車輛報修</h3></div>
-            <div class="menu-item" onclick="enterCarbonPage()"><div class="menu-icon">🌍</div><h3 data-i18n="menu_carbon">減碳貢獻</h3></div>
+       <header>
+        <div class="user-menu-container" id="userMenu"></div>
+        <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
+    </header>
+
+    <div class="content-area">
+    <article class="story-section">
+        <h1 class="story-title" data-i18n="story_title">讓校園再次「綠」起來：重拾中央小綠綠的單車回憶</h1>
+        
+        <!-- 圖片區 1 -->
+        <div class="story-image-container">
+            <img src="主任們騎腳踏車.jpg" alt="中央小綠綠回憶圖" class="story-img">
+            <p class="img-caption" data-i18n="img_caption1">回憶中穿梭在松林間的翠綠身影</p>
         </div>
+
+        <p class="story-p" data-i18n="story_p1">如果你是在 2010 年左右漫步在中央大學的校園，你一定會注意到那一抹穿梭在松林間的鮮豔色彩——「中央小綠綠」。</p>
+
+        <h2 class="story-sub" data-i18n="story_sub1">什麼是「中央小綠綠」？</h2>
+        <p class="story-p" data-i18n="story_p2">「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫。在那個 YouBike 尚未普及的年代，學校為了推廣低碳校園、減輕校內機車負擔，特別購置了一批翠綠色的單車。這些腳踏車採取「公共共享」的概念，讓學生與教職員能自由騎乘於教學區、宿舍與餐廳之間，是許多中大人心中共同的校園標誌。</p>
+
+        <!-- 圖片區 2 -->
+        <div class="story-image-container">
+            <img src="小綠綠.png" alt="中央小綠綠" class="story-img">
+        </div>
+
+        <p class="story-p" data-i18n="story_p3">然而，隨著時間推移，車輛損耗、維護經費不足以及管理機制等挑戰，讓這群綠色身影逐漸消失在校園的角落，最終走入了歷史。</p>
+
+        <h2 class="story-sub" data-i18n="story_sub2">我們的目標：復活綠色傳奇</h2>
+        <p class="story-p" data-i18n="story_p3">雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘。在 2026 年的今天，面對氣候變遷與減碳轉型的浪潮，我們立志要「復活中央小綠綠計畫」。</p>
+
+        <p class="story-p" data-i18n="story_p3">我們不只是想帶回那輛腳踏車，更是要結合現代的數位管理與社群力量：</p>
+
+        <ul class="goal-list">
+            <li data-i18n="goal_1"><strong>優化管理：</strong> 引入智慧門鎖與 App 追蹤，解決當年車輛遺失與維修不明的問題。</li>
+            <li data-i18n="goal_2"><strong>循環經濟：</strong> 建立校內維修社群，讓修車成為一種技能傳承，減少資源浪費。</li>
+            <li data-i18n="goal_3"><strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。</li>
+        </ul>
+    </article>
+</div>
+
+    <nav class="side-nav">
+        <div class="nav-item" onclick="enterMap()">
+            <span class="nav-icon">🚲</span>
+            <span class="nav-text" data-i18n="menu_map">地圖尋車</span>
+        </div>
+        <div class="nav-item" onclick="enterMemberPage()">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text" data-i18n="menu_member">會員專區</span>
+        </div>
+        <div class="nav-item" onclick="enterRepairPage()">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text" data-i18n="menu_repair">車輛報修</span>
+        </div>
+        <div class="nav-item" onclick="enterCarbonPage()">
+            <span class="nav-icon">🌍</span>
+            <span class="nav-text" data-i18n="menu_carbon">減碳貢獻</span>
+        </div>
+    </nav>
     </section>
 
     <section id="carbonSection" class="view-section">
