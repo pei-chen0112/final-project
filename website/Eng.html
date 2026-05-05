@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <section id="loginSection" class="view-section active-view auth-container" style="position: relative;">
+    <section id="loginSection" class="view-section auth-container" style="position: relative;">
         <div class="lang-switch">
             <select onchange="changeLang(this.value)">
                 <option value="zh">🇹🇼 中文</option>
@@ -45,11 +45,14 @@
         </div>
     </section>
 
-    <section id="mainMenuSection" class="view-section">
+    <section id="mainMenuSection" class="view-section active-view">
         <header>
-            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
-            <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
-        </header>
+    <!-- 左上角使用者選單容器 -->
+    <div class="user-menu-container" id="userMenu">
+        <!-- 內容會由 JavaScript 動態產生成「登入」或「使用者頭像」 -->
+    </div>
+    <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
+</header>
         <div class="menu-grid">
             <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3 data-i18n="menu_map">地圖尋車</h3></div>
             <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3 data-i18n="menu_member">會員專區</h3></div>

@@ -69,7 +69,16 @@
                 console.log(`[${bikeId}] 實體車機螢幕顯示密碼: ${newPwd}`);
             }
         }, 60000); 
-
+        // 檢查登入權限的通用函式
+        function checkAuth(callback) {
+            if (!currentUser) {
+          alert("請先登入系統才能使用此功能！");
+          switchView('loginSection');
+          return false;
+         }
+         if (callback) callback(); // 如果已登入，執行原本的功能
+        return true;
+        }
         function switchView(targetId) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active-view'));
             document.getElementById(targetId).classList.add('active-view');
@@ -78,7 +87,55 @@
         function logout() {
             currentUser = ""; document.getElementById('loginId').value = ""; document.getElementById('loginPwd').value = "";
             switchView('loginSection');
+            renderUserMenu(); //
         }
+        function renderUserMenu() {
+             const menuContainer = document.getElementById('userMenu');
+             // 如果 HTML 還沒加 id="userMenu" 的容器，先跳出避免報錯
+             if (!menuContainer) return; 
+
+             if (!currentUser) {
+        // 未登入狀態：顯示登入按鈕
+        menuContainer.innerHTML = `
+            <button class="user-btn" onclick="switchView('loginSection')">登入</button>
+        `;
+         } else {
+        // 已登入狀態：顯示帳號下拉選單
+        const displayName = currentUser === 'admin' ? '👨‍🔧 技師' : `👤 ${currentUser}`;
+        menuContainer.innerHTML = `
+            <div class="dropdown" id="userDropdown">
+                <button class="user-btn" onclick="toggleUserDropdown(event)">
+                    ${displayName} ▾
+                </button>
+                <div class="dropdown-content">
+                    <div onclick="logout()">登出系統</div>
+                    <div onclick="switchAccount()">切換帳號</div>
+                </div>
+            </div>
+                 `;
+             }
+        }
+
+// 切換下拉選單顯示/隱藏
+        function toggleUserDropdown(event) {
+         event.stopPropagation(); // 防止點擊事件冒泡到 window
+         document.getElementById('userDropdown').classList.toggle('show-dropdown');
+        }
+
+// 切換帳號邏輯
+        function switchAccount() {
+         currentUser = ""; 
+          document.getElementById('loginId').value = "";
+         document.getElementById('loginPwd').value = "";
+          switchView('loginSection');
+          renderUserMenu();
+        }
+
+// 點擊網頁其他地方時關閉選單
+        window.addEventListener('click', function() {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('show-dropdown');
+        });
 
         function handleRegister(event) {
             event.preventDefault();
@@ -94,18 +151,20 @@
             const pwd = document.getElementById('loginPwd').value;
 
             if (id === 'admin' && pwd === 'admin123') {
-                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); return;
+                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); renderUserMenu(); //
+                return;
             }
 
             if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
                 currentUser = id; document.getElementById('loginError').style.display = 'none'; switchView('mainMenuSection');
+                renderUserMenu();
             } else { 
                 document.getElementById('loginError').innerText = t('err_login');
                 document.getElementById('loginError').style.display = 'block'; 
             }
         }
 
-        function enterMemberPage() { renderMemberCenter(); switchView('memberSection'); }
+        function enterMemberPage() {checkAuth(() => { renderMemberCenter(); switchView('memberSection');}); }
 
         function renderMemberCenter() {
             let balance = localStorage.getItem('accountBalance') || '0';
@@ -267,7 +326,12 @@
             alert(t('alt_approve_ok1') + newBikeId + t('alt_approve_ok2')); 
             renderAdminDashboard(); 
         }
-
+        // 新增一個進入報修頁面的函式
+            function enterRepairPage() {
+            checkAuth(() => {
+            switchView('repairSection');
+            });
+        }
         function rejectBike(appId) {
             let reason = prompt(t('prompt_reject'));
             if (reason === null) return; 
@@ -374,6 +438,7 @@
         }
 
         function enterCarbonPage() {
+            checkAuth(() => {
             let today = new Date().toLocaleDateString();
             
             if (localStorage.getItem('NCU_CarbonDate') !== today) {
@@ -385,7 +450,9 @@
             document.getElementById('totalCarbon').innerText = localStorage.getItem('NCU_TotalCarbon') || '0';
             
             switchView('carbonSection');
+            });
         }
 
         // 初始化預設為中文
-        changeLang('zh');
+        changeLang('zh'); 
+        renderUserMenu(); // <--- 確保網頁重新整理時也會跑一次

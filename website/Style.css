@@ -74,3 +74,57 @@
         /* 語言切換選單 */
         .lang-switch { position: absolute; top: 15px; right: 15px; z-index: 999; }
         .lang-switch select { padding: 6px; border-radius: 8px; border: 2px solid #fff; background: rgba(255,255,255,0.9); color: #1b5e20; font-weight: bold; cursor: pointer; outline: none; }
+
+        /* 使用者選單容器 */
+.user-menu-container {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1001;
+}
+
+/* 登入按鈕與頭像按鈕樣式 */
+.user-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* 下拉選單內容 */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    background-color: white;
+    min-width: 120px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dropdown-content div {
+    color: #333;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-content div:hover {
+    background-color: #f1f1f1;
+}
+
+/* 顯示下拉選單 */
+.show-dropdown .dropdown-content {
+    display: block;
+}
