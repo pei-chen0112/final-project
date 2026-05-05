@@ -1,0 +1,277 @@
+ 
+        /* ==================== 1. 基礎與共用樣式 ==================== */
+        body { font-family: "微軟正黑體", Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
+        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
+        .active-view { display: flex; }
+        .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
+        header { background-color: #2e7d32; color: white; padding: 15px 0; text-align: center; position: relative; flex-shrink: 0; }
+        header h1 { margin: 0; font-size: 22px; }
+        .back-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
+
+        .auth-container { background: linear-gradient(135deg, #4caf50 0%, #1b5e20 100%); justify-content: center; align-items: center; }
+        .card { background-color: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 350px; text-align: center; margin: 0 auto; position: relative; }
+        .card h2 { color: #2e7d32; margin-top: 0; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; font-size: 14px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fff; }
+        input[type="file"] { font-size: 13px; padding: 8px; cursor: pointer; }
+        
+        .btn-green { background-color: #2e7d32; } .btn-green:hover { background-color: #1b5e20; }
+        .btn-orange { background-color: #ff9800; } .btn-orange:hover { background-color: #e68a00; }
+        .btn-red { background-color: #F44336; } .btn-red:hover { background-color: #D32F2F; }
+        .link-text { margin-top: 15px; font-size: 14px; cursor: pointer; color: #2e7d32; font-weight: bold; text-decoration: underline; }
+
+        /* ==================== 2. 主選單與頁面內容 ==================== */
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr; 
+            gap: 20px; 
+            padding: 30px; 
+            width: 100%; 
+            max-width: 100%; 
+            flex-grow: 1; 
+            box-sizing: border-box; 
+        }
+        .menu-item { 
+            background: white; 
+            border-radius: 20px; 
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+            cursor: pointer; 
+            border: 2px solid transparent; 
+            transition: 0.3s; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .menu-item:hover { border-color: #2e7d32; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(46,125,50,0.2); }
+        .menu-icon { font-size: clamp(50px, 8vw, 120px); }
+        .menu-item h3 { font-size: clamp(18px, 3vw, 36px); margin: 15px 0 0 0; color: #333; }
+        
+        .page-content { padding: 30px; display: flex; flex-direction: column; align-items: center; }
+        .upload-box { background: #f9f9f9; border: 2px dashed #2e7d32; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; width: 100%; box-sizing: border-box; }
+
+        /* ==================== 3. 修理站技師專屬後台樣式 ==================== */
+        #adminSection header { background-color: #333; } 
+        .admin-panel { padding: 20px; width: 95%; max-width: 800px; margin: 0 auto; }
+        .admin-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #ff9800; }
+        .admin-card h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f4f4f9; }
+        .action-btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px;}
+        .btn-approve { background-color: #2e7d32; }
+        .btn-reject { background-color: #F44336; }
+
+        /* ==================== 4. 地圖與浮動面板樣式 ==================== */
+        #map { flex-grow: 1; width: 100%; z-index: 1; }
+        #rentVerifyPanel { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); z-index: 2000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #0072C6; }
+        #activeRidePanel { display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #2e7d32; }
+        .timer { font-size: 32px; font-weight: bold; color: #2e7d32; margin: 10px 0; font-family: monospace; }
+        
+        /* 語言切換選單 */
+        .lang-switch { position: fixed; top: 15px; right: 15px; z-index: 2001; }
+        .lang-switch select { padding: 6px 10px; border-radius: 20px; border: 2px solid #fff; background: rgba(255,255,255,0.9); color: #1b5e20; font-weight: bold; cursor: pointer; outline: none; }
+
+        /* 使用者選單容器 */
+.user-menu-container {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1001;
+}
+
+/* 登入按鈕與頭像按鈕樣式 */
+.user-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* 下拉選單內容 */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    background-color: white;
+    min-width: 120px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dropdown-content div {
+    color: #333;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-content div:hover {
+    background-color: #f1f1f1;
+}
+
+/* 顯示下拉選單 */
+.show-dropdown .dropdown-content {
+    display: block;
+}
+.story-section {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    text-align: left; /* 文字靠左對齊 */
+    line-height: 1.8; /* 增加行距 */
+    color: #444;
+}
+
+.story-title {
+    color: #2e7d32;
+    font-size: 24px;
+    border-left: 5px solid #2e7d32;
+    padding-left: 15px;
+    margin-bottom: 25px;
+}
+
+.story-sub {
+    color: #1b5e20;
+    font-size: 20px;
+    margin-top: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.story-p {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+/* 圖片樣式 */
+.story-image-container {
+    margin: 25px 0;
+    text-align: center;
+}
+
+.story-img {
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.img-caption {
+    font-size: 13px;
+    color: #888;
+    margin-top: 8px;
+}
+
+/* 清單樣式 */
+.goal-list {
+    background: #f1f8e9;
+    padding: 20px 20px 20px 40px;
+    border-radius: 10px;
+    list-style-type: none;
+}
+
+.goal-list li {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.goal-list li::before {
+    content: "🌱";
+    position: absolute;
+    left: -30px;
+}
+
+/* 調整原本的 content-area 確保不會被右側選單蓋住 */
+.content-area {
+    padding: 20px;
+    margin-right: 100px; /* 預留給側邊選單的空間 */
+    padding-bottom: 100px; /* 預留底部空間防止被截斷 */
+}
+
+/* 手機版適應：當螢幕太小時，將右側邊距縮小 */
+@media (max-width: 600px) {
+    .content-area {
+        margin-right: 70px;
+        padding: 10px;
+    }
+    .story-title { font-size: 20px; }
+}
+
+.side-nav {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%); /* 垂直置中 */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 999;
+}
+
+/* 個別按鈕樣式 */
+.nav-item {
+    background-color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%; /* 圓形按鈕 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #2e7d32;
+    overflow: hidden;
+}
+
+.nav-item:hover {
+    width: 120px; /* 懸停時展開顯示文字 */
+    border-radius: 30px;
+    background-color: #2e7d32;
+}
+
+.nav-icon {
+    font-size: 24px;
+}
+
+/* 預設隱藏文字，滑鼠移上去才顯示 */
+.nav-text {
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    display: none;
+    white-space: nowrap;
+}
+
+.nav-item:hover .nav-icon {
+    display: none; /* 展開時隱藏圖示 */
+}
+
+.nav-item:hover .nav-text {
+    display: block; /* 展開時顯示文字 */
+}
+
+/* 中間內容區佔位 */
+.content-area {
+    padding: 20px;
+    margin-right: 100px; /* 留出右側選單的空間 */
+}

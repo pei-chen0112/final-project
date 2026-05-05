@@ -1,258 +1,19 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中大愛心綠色腳踏車系統</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        /* ==================== 1. 基礎與共用樣式 ==================== */
-        body { font-family: "微軟正黑體", Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
-        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
-        .active-view { display: flex; }
-        .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
-        header { background-color: #2e7d32; color: white; padding: 15px 0; text-align: center; position: relative; flex-shrink: 0; }
-        header h1 { margin: 0; font-size: 22px; }
-        .back-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
-
-        .auth-container { background: linear-gradient(135deg, #4caf50 0%, #1b5e20 100%); justify-content: center; align-items: center; }
-        .card { background-color: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 350px; text-align: center; margin: 0 auto; position: relative; }
-        .card h2 { color: #2e7d32; margin-top: 0; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; font-size: 14px; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fff; }
-        input[type="file"] { font-size: 13px; padding: 8px; cursor: pointer; }
-        
-        .btn-green { background-color: #2e7d32; } .btn-green:hover { background-color: #1b5e20; }
-        .btn-orange { background-color: #ff9800; } .btn-orange:hover { background-color: #e68a00; }
-        .btn-red { background-color: #F44336; } .btn-red:hover { background-color: #D32F2F; }
-        .link-text { margin-top: 15px; font-size: 14px; cursor: pointer; color: #2e7d32; font-weight: bold; text-decoration: underline; }
-
-        /* ==================== 2. 主選單與頁面內容 ==================== */
-        .menu-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            grid-template-rows: 1fr 1fr; 
-            gap: 20px; 
-            padding: 30px; 
-            width: 100%; 
-            max-width: 100%; 
-            flex-grow: 1; 
-            box-sizing: border-box; 
-        }
-        .menu-item { 
-            background: white; 
-            border-radius: 20px; 
-            text-align: center; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-            cursor: pointer; 
-            border: 2px solid transparent; 
-            transition: 0.3s; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .menu-item:hover { border-color: #2e7d32; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(46,125,50,0.2); }
-        .menu-icon { font-size: clamp(50px, 8vw, 120px); }
-        .menu-item h3 { font-size: clamp(18px, 3vw, 36px); margin: 15px 0 0 0; color: #333; }
-        
-        .page-content { padding: 30px; display: flex; flex-direction: column; align-items: center; }
-        .upload-box { background: #f9f9f9; border: 2px dashed #2e7d32; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; width: 100%; box-sizing: border-box; }
-
-        /* ==================== 3. 修理站技師專屬後台樣式 ==================== */
-        #adminSection header { background-color: #333; } 
-        .admin-panel { padding: 20px; width: 95%; max-width: 800px; margin: 0 auto; }
-        .admin-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #ff9800; }
-        .admin-card h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f4f4f9; }
-        .action-btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px;}
-        .btn-approve { background-color: #2e7d32; }
-        .btn-reject { background-color: #F44336; }
-
-        /* ==================== 4. 地圖與浮動面板樣式 ==================== */
-        #map { flex-grow: 1; width: 100%; z-index: 1; }
-        #rentVerifyPanel { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); z-index: 2000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #0072C6; }
-        #activeRidePanel { display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; width: 80%; max-width: 300px; text-align: center; border-top: 5px solid #2e7d32; }
-        .timer { font-size: 32px; font-weight: bold; color: #2e7d32; margin: 10px 0; font-family: monospace; }
-        
-        /* 語言切換選單 */
-        .lang-switch { position: absolute; top: 15px; right: 15px; z-index: 999; }
-        .lang-switch select { padding: 6px; border-radius: 8px; border: 2px solid #fff; background: rgba(255,255,255,0.9); color: #1b5e20; font-weight: bold; cursor: pointer; outline: none; }
-    </style>
-</head>
-<body>
-
-    <section id="loginSection" class="view-section active-view auth-container" style="position: relative;">
-        <div class="lang-switch">
-            <select onchange="changeLang(this.value)">
-                <option value="zh">🇹🇼 中文</option>
-                <option value="en">🇺🇸 English</option>
-            </select>
-        </div>
-
-        <div class="card">
-            <h2>🚲 NCU Green Love Bikes</h2>
-            <p style="font-size: 12px; color: #666; margin-top: -5px;" data-i18n="login_sub">中大愛心綠色腳踏車</p>
-            <form onsubmit="handleLogin(event)">
-                <div class="input-group"><label data-i18n="id_label">學號 / 帳號</label><input type="text" id="loginId" data-i18n-ph="id_ph" placeholder="技師請輸入 admin" required></div>
-                <div class="input-group"><label data-i18n="pwd_label">密碼</label><input type="password" id="loginPwd" data-i18n-ph="pwd_ph" placeholder="技師密碼 admin123" required></div>
-                <div id="loginError" style="color:red; display:none; font-size:13px; margin-bottom:10px;" data-i18n="err_login">帳密錯誤或尚未註冊</div>
-                <button type="submit" class="btn btn-green" data-i18n="login_btn">登入系統</button>
-            </form>
-            <div class="link-text" onclick="switchView('registerSection')" data-i18n="go_reg">還沒有帳號？ 前往註冊</div>
-            <div class="link-text" style="color: #F44336; margin-top: 5px;" onclick="alert(t('alt_forget'))" data-i18n="forget_pwd">忘記密碼</div>
-        </div>
-    </section>
-
-    <section id="registerSection" class="view-section auth-container">
-        <div class="card">
-            <h2 data-i18n="reg_title">📝 新增學生帳號</h2>
-            <form onsubmit="handleRegister(event)">
-                <div class="input-group"><label data-i18n="reg_id_label">設定學號</label><input type="text" id="regId" required></div>
-                <div class="input-group"><label data-i18n="reg_pwd_label">設定密碼</label><input type="password" id="regPwd" required></div>
-                <button type="submit" class="btn btn-orange" data-i18n="reg_btn">立即開通帳號</button>
-            </form>
-            <div class="link-text" onclick="switchView('loginSection')" data-i18n="back_login">返回登入</div>
-        </div>
-    </section>
-
-    <section id="mainMenuSection" class="view-section">
-        <header>
-            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
-            <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
-        </header>
-        <div class="menu-grid">
-            <div class="menu-item" onclick="enterMap()"><div class="menu-icon">🚲</div><h3 data-i18n="menu_map">地圖尋車</h3></div>
-            <div class="menu-item" onclick="enterMemberPage()"><div class="menu-icon">👤</div><h3 data-i18n="menu_member">會員專區</h3></div>
-            <div class="menu-item" onclick="switchView('repairSection')"><div class="menu-icon">🔧</div><h3 data-i18n="menu_repair">車輛報修</h3></div>
-            <div class="menu-item" onclick="enterCarbonPage()"><div class="menu-icon">🌍</div><h3 data-i18n="menu_carbon">減碳貢獻</h3></div>
-        </div>
-    </section>
-
-    <section id="carbonSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="carbon_title">減碳貢獻</h1></header>
-        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
-            <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="carbon_h3">🌍 您的綠色足跡</h3>
-            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.6;" data-i18n="carbon_p">
-                依據歐洲自行車聯盟的研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。
-            </p>
-            <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center;">
-                <p style="margin: 0; color: #2e7d32; font-size: 14px;" data-i18n="carbon_today">本日節碳量</p>
-                <h2 style="margin: 5px 0; color: #1b5e20; font-size: 36px;"><span id="dailyCarbon">0</span> <span style="font-size:16px;" data-i18n="carbon_unit">克</span></h2>
-            </div>
-            <div style="background: #f4f4f9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center; border: 1px solid #ddd;">
-                <p style="margin: 0; color: #555; font-size: 14px;" data-i18n="carbon_total">累積總節碳量</p>
-                <h2 style="margin: 5px 0; color: #333; font-size: 36px;"><span id="totalCarbon">0</span> <span style="font-size:16px;" data-i18n="carbon_unit2">克</span></h2>
-            </div>
-        </div>
-    </section>
-
-    <section id="memberSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="member_title">會員專區</h1></header>
-        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
-            <div id="memberDisplay" style="width: 100%;"></div>
-            <div class="upload-box" style="margin-top: 30px;">
-                <h4 style="margin-top: 0; color: #2e7d32;" data-i18n="reclaim_title">🚲 回收校園廢棄車輛</h4>
-                <p style="font-size: 13px; color: #555; line-height: 1.5;" data-i18n="reclaim_desc">
-                    1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
-                </p>
-                <button class="btn btn-green" onclick="switchView('uploadBikeSection')" data-i18n="reclaim_btn">前往填寫回收申請單</button>
-            </div>
-        </div>
-    </section>
-
-    <section id="uploadBikeSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('memberSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="upload_title">車輛照片上傳</h1></header>
-        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
-            <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="upload_h3">📸 提供車輛檢測照片</h3>
-            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.5; margin-bottom: 20px;" data-i18n="upload_desc">
-                為確保車輛符合改裝標準，請上傳 3 張清晰的車輛照片。審核通過後，方可牽至修理站。
-            </p>
-            
-            <div class="input-group">
-                <label data-i18n="pic1_label">1. 車輛正面照</label>
-                <input type="file" id="bikePic1" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
-            </div>
-            <div class="input-group">
-                <label data-i18n="pic2_label">2. 車輛側面照</label>
-                <input type="file" id="bikePic2" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
-            </div>
-            <div class="input-group">
-                <label data-i18n="pic3_label">3. 局部特寫 / 損壞處</label>
-                <input type="file" id="bikePic3" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
-            </div>
-            
-            <button class="btn btn-orange" onclick="confirmBikeUpload()" data-i18n="upload_submit">確認上傳並送出申請</button>
-        </div>
-    </section>
-
-    <section id="repairSection" class="view-section">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="repair_title">車輛報修</h1></header>
-        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
-            <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;" data-i18n="repair_warn">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
-            <div class="input-group"><label data-i18n="rep_id_label">故障車牌號碼</label><input type="text" id="repairBikeId" data-i18n-ph="rep_id_ph" placeholder="例如: NCU-001"></div>
-            <div class="input-group"><label data-i18n="rep_desc_label">損壞狀況描述</label><input type="text" id="repairDesc" data-i18n-ph="rep_desc_ph" placeholder="例如: 煞車失靈"></div>
-            <button class="btn btn-orange" onclick="submitRepair()" data-i18n="repair_btn">通報損壞腳踏車</button>
-        </div>
-    </section>
-
-    <section id="adminSection" class="view-section">
-        <header>
-            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
-            <h1 data-i18n="admin_title">👨‍🔧 腳踏車修理站 - 技師管理後台</h1>
-        </header>
-        <div class="admin-panel">
-            <div class="admin-card">
-                <h3 data-i18n="admin_appr_title">🚲 待改裝與註冊車輛 (已附照片)</h3>
-                <table>
-                    <thead><tr><th data-i18n="th_student">申請學生</th><th data-i18n="th_time">申請時間</th><th data-i18n="th_action">操作</th></tr></thead>
-                    <tbody id="adminApprovalTable"></tbody>
-                </table>
-            </div>
-            <div class="admin-card" style="border-left-color: #F44336;">
-                <h3 data-i18n="admin_rep_title">🔧 待修復車輛清單</h3>
-                <table>
-                    <thead><tr><th data-i18n="th_bike">報修車號</th><th data-i18n="th_desc">損壞描述</th><th data-i18n="th_action">操作</th></tr></thead>
-                    <tbody id="adminRepairTable"></tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <section id="mapSection" class="view-section" style="position: relative;">
-        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="map_title">地圖尋車</h1></header>
-        <div id="map"></div>
-
-        <div id="rentVerifyPanel">
-            <h3 style="color: #0072C6;" data-i18n="unlock_title">解鎖車輛</h3>
-            <p style="font-size: 12px; color: gray;" data-i18n="unlock_desc">無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style="color:#0072C6;">$5</strong></p>
-            <div class="input-group"><label data-i18n="plate_label">車牌號碼</label><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
-            <p style="font-size: 12px; color: #F44336; margin-bottom: 5px; text-align: left;" data-i18n="pwd_warn">*請查看實體腳踏車電子螢幕上的 4 位數密碼</p>
-            <div class="input-group"><input type="password" id="inputEPassword" data-i18n-ph="pwd_ph2" placeholder="輸入電子密碼" required></div>
-            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()" data-i18n="unlock_btn">帳戶餘額付款並解鎖</button>
-            <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()" data-i18n="cancel_btn">取消</button>
-        </div>
-
-        <div id="activeRidePanel">
-            <h2><span data-i18n="riding_title">🚲 騎乘中：</span><span id="rentedBikeId"></span></h2>
-            <div class="timer" id="rideTimer">00:00</div>
-            <p style="font-size: 12px; color: gray; margin-top: -5px;" data-i18n="gps_monitor">GPS 追蹤監控運行中</p>
-            <button class="btn btn-red" onclick="returnBike()" data-i18n="return_btn">⏹️ 結束騎乘並 GPS 還車</button>
-        </div>
-    </section>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
         // ==========================================
         // 💡 雙語字典與切換邏輯 (i18n System)
         // ==========================================
         const translations = {
             zh: {
+                  story_title: "讓校園再次「綠」起來：重拾中央小綠綠的單車回憶",
+                 img_caption1: "回憶中穿梭在松林間的翠綠身影",
+                 story_p1: "如果你是在 2010 年左右漫步在中央大學的校園，你一定會注意到那一抹穿梭在松林間的鮮豔色彩——「中央小綠綠」。",
+                 story_sub1: "什麼是「中央小綠綠」？",
+                 story_p2: "「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫... (此處省略部分文字)",
+                 story_sub2: "我們的目標：復活綠色傳奇",
+                 story_p3: "雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘...",
+                  goal_1: "<strong>優化管理：</strong> 引入智慧門鎖與 App 追蹤，解決當年車輛遺失與維修不明的問題。",
+                  goal_2: "<strong>循環經濟：</strong> 建立校內維修社群，讓修車成為一種技能傳承，減少資源浪費。",
+                   goal_3: "<strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。",
                 login_sub: "中大愛心綠色腳踏車", id_label: "學號 / 帳號", pwd_label: "密碼", id_ph: "技師請輸入 admin", pwd_ph: "技師密碼 admin123", login_btn: "登入系統", go_reg: "還沒有帳號？ 前往註冊", forget_pwd: "忘記密碼",
                 reg_title: "📝 新增學生帳號", reg_id_label: "設定學號", reg_pwd_label: "設定密碼", reg_btn: "立即開通帳號", back_login: "返回登入",
                 logout: "登出", menu_title: "中大愛心綠色腳踏車", menu_map: "地圖尋車", menu_member: "會員專區", menu_repair: "車輛報修", menu_carbon: "減碳貢獻",
@@ -265,9 +26,22 @@
                 // JS Alerts / Dynamic Data
                 alt_forget: "請聯繫計中或系統管理員重置密碼", alt_reg_ok: "✅ 註冊成功！請登入系統。", prompt_linepay: "請輸入想透過 LINE Pay 儲值的金額 (例如: 50, 100)：", err_amount: "❌ 請輸入有效的金額！", alt_line_wait: "🔄 正在轉跳至 LINE Pay 授權頁面...\n(請等候 1.5 秒)", cfm_linepay_1: "【LINE Pay 模擬畫面】\n是否確認支付 台幣 ", cfm_linepay_2: " 元？", alt_line_ok: "✅ LINE Pay 交易成功！", alt_cancel: "❌ 交易已取消。", prompt_promo: "請輸入您的點數儲值序號：", err_promo_used: "❌ 兌換失敗：此序號已被使用過了！", alt_promo_ok: "🎉 兌換成功！獲得 ", alt_promo_ok2: " 元儲值金！", err_promo_invalid: "❌ 兌換失敗：無效的序號！", err_empty: "請填寫完整資訊！", alt_rep_ok: "✅ 已通報並下線該車輛！請牽至修理站。", alt_fix_ok: "✅ 車輛 ", alt_fix_ok2: " 已修復重新上架！", err_renting: "❌ 您已經有一台租借中的車輛！", err_bal: "❌ 帳戶餘額不足 (單次騎乘需 5 元)！請先至會員專區儲值。", err_pwd: "❌ 電子密碼驗證失敗！請確認實體車機螢幕上的最新密碼。", alt_rent_ok: "✅ 付款成功！已扣款 5 元 (餘額 ", alt_rent_ok2: " 元)。\n車輛解鎖，開始計時！", alt_ret_ok: "✅ 還車成功！\n騎乘時間：", alt_ret_ok2: "\n🌱 本次為地球減少了 ", alt_ret_ok3: " 克的碳排放！", empty_rep: "無待修車輛", empty_appr: "無待安裝車輛", btn_fix: "修復上架", err_login: "帳密錯誤或尚未註冊", 
                 history_title: "📜 廢棄車回收申請紀錄", history_time: "時間", history_status: "狀態", history_reason: "備註 / 原因", no_history: "尚無申請紀錄", pending: "⏳ 審核中", approved: "✅ 已通過", rejected: "❌ 未通過", bonus_sent: "已發放 $50", 
-                appr_photo_msg: "(已審核3張照片)", btn_approve: "通過核准", btn_reject: "退回", prompt_reject: "請輸入退回/未通過原因：\n(例如：照片不清晰、非校園內車輛)", default_reject: "照片不清晰或不符規格", alt_reject_ok: "❌ 已退回該筆申請。", alt_approve_ok1: "✅ 已核准！發配車牌【", alt_approve_ok2: "】。\n已標記為審核通過並發放獎勵金！"
+                appr_photo_msg: "(已審核3張照片)", btn_approve: "通過核准", btn_reject: "退回", prompt_reject: "請輸入退回/未通過原因：\n(例如：照片不清晰、非校園內車輛)", default_reject: "照片不清晰或不符規格", alt_reject_ok: "❌ 已退回該筆申請。", alt_approve_ok1: "✅ 已核准！發配車牌【", alt_approve_ok2: "】。\n已標記為審核通過並發放獎勵金！",
+                btn_login_nav: "登入",
+                btn_logout_nav: "登出系統",
+                btn_switch_nav: "切換帳號"
             },
             en: {
+                story_title: "Make Campus 'Green' Again: Reliving the NCU Green Bike Memories",
+        img_caption1: "The vibrant green bikes cruising through the pine trees.",
+        story_p1: "If you strolled through NCU around 2010, you surely noticed that flash of green color among the pine trees—the 'NCU Green Bike'.",
+        story_sub1: "What is 'NCU Green Bike'?",
+        story_p2: "The 'NCU Green Bike' was a campus bike-sharing project launched around 2010. In an era before YouBike was popular, the university purchased a fleet of emerald-green bicycles to promote a low-carbon campus.",
+        story_sub2: "Our Goal: Reviving the Green Legend",
+        story_p3: "Though the original project ended, the vision of campus sustainability should not be forgotten. In 2026, we aim to revive the NCU Green Bike project.",
+        goal_1: "<strong>Better Management:</strong> Smart locks and App tracking to prevent loss and track maintenance.",
+        goal_2: "<strong>Circular Economy:</strong> A repair community to pass on skills and reduce waste.",
+        goal_3: "<strong>Low-Carbon Life:</strong> Making cycling the top choice for commuting on campus once again.",
                 login_sub: "NCU Green Love Bikes", id_label: "Student ID / Account", pwd_label: "Password", id_ph: "Tech enter admin", pwd_ph: "Tech pwd admin123", login_btn: "Login", go_reg: "No account? Registration", forget_pwd: "Forget password",
                 reg_title: "📝 Create Account", reg_id_label: "Student ID", reg_pwd_label: "Set Password", reg_btn: "Registration", back_login: "Back to Login",
                 logout: "Logout", menu_title: "NCU Green Love Bikes", menu_map: "Find a Bike", menu_member: "Member Area", menu_repair: "Report Repair", menu_carbon: "Reduce Carbon",
@@ -280,7 +54,10 @@
                 // JS Alerts / Dynamic Data
                 alt_forget: "Please contact the admin to reset your password.", alt_reg_ok: "✅ Registration successful! Please login.", prompt_linepay: "Enter LINE Pay top-up amount (e.g., 50, 100):", err_amount: "❌ Invalid amount!", alt_line_wait: "🔄 Redirecting to LINE Pay...\n(Please wait 1.5s)", cfm_linepay_1: "[LINE Pay Simulation]\nConfirm payment of NT$ ", cfm_linepay_2: " ?", alt_line_ok: "✅ LINE Pay successful!", alt_cancel: "❌ Transaction canceled.", prompt_promo: "Enter promo code:", err_promo_used: "❌ Promo code already used!", alt_promo_ok: "🎉 Success! You received $", alt_promo_ok2: " bonus!", err_promo_invalid: "❌ Invalid promo code!", err_empty: "Please fill in all fields!", alt_rep_ok: "✅ Reported and taken offline! Bring bike to station.", alt_fix_ok: "✅ Bike ", alt_fix_ok2: " fixed and online!", err_renting: "❌ You already have an active rental!", err_bal: "❌ Insufficient balance ($5 required)! Top up in Member Area.", err_pwd: "❌ Invalid password! Check the physical bike screen.", alt_rent_ok: "✅ Payment success! Deducted $5 (Balance $", alt_rent_ok2: ").\nBike unlocked, timer started!", alt_ret_ok: "✅ Return successful!\nDuration: ", alt_ret_ok2: "\n🌱 You saved ", alt_ret_ok3: " g of carbon emissions!", empty_rep: "No pending repairs", empty_appr: "No pending applications", btn_fix: "Fixed & Online", err_login: "Invalid ID/Password or Unregistered",
                 history_title: "📜 Reclaim Application History", history_time: "Time", history_status: "Status", history_reason: "Reason", no_history: "No records found", pending: "⏳ Pending", approved: "✅ Approved", rejected: "❌ Rejected", bonus_sent: "$50 Credited",
-                appr_photo_msg: "(3 Photos Checked)", btn_approve: "Approve", btn_reject: "Reject", prompt_reject: "Enter reason for rejection:\n(e.g., Unclear photos, not a campus bike)", default_reject: "Unclear photos or does not meet standards", alt_reject_ok: "❌ Application rejected.", alt_approve_ok1: "✅ Approved! Plate issued [", alt_approve_ok2: "].\nBonus credited to user account!"
+                appr_photo_msg: "(3 Photos Checked)", btn_approve: "Approve", btn_reject: "Reject", prompt_reject: "Enter reason for rejection:\n(e.g., Unclear photos, not a campus bike)", default_reject: "Unclear photos or does not meet standards", alt_reject_ok: "❌ Application rejected.", alt_approve_ok1: "✅ Approved! Plate issued [", alt_approve_ok2: "].\nBonus credited to user account!",
+                btn_login_nav: "Login",
+                btn_logout_nav: "Logout",
+                btn_switch_nav: "Switch Account"        
             }
         };
 
@@ -297,7 +74,9 @@
             });
             if (document.getElementById('memberSection').classList.contains('active-view')) renderMemberCenter();
             if (document.getElementById('adminSection').classList.contains('active-view')) renderAdminDashboard();
-        }
+            renderUserMenu(); 
+}
+        
 
         // ==========================================
         // 核心邏輯
@@ -318,7 +97,16 @@
                 console.log(`[${bikeId}] 實體車機螢幕顯示密碼: ${newPwd}`);
             }
         }, 60000); 
-
+        // 檢查登入權限的通用函式
+        function checkAuth(callback) {
+            if (!currentUser) {
+          alert("請先登入系統才能使用此功能！");
+          switchView('loginSection');
+          return false;
+         }
+         if (callback) callback(); // 如果已登入，執行原本的功能
+        return true;
+        }
         function switchView(targetId) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active-view'));
             document.getElementById(targetId).classList.add('active-view');
@@ -327,7 +115,55 @@
         function logout() {
             currentUser = ""; document.getElementById('loginId').value = ""; document.getElementById('loginPwd').value = "";
             switchView('loginSection');
+            renderUserMenu(); //
         }
+        function renderUserMenu() {
+             const menuContainer = document.getElementById('userMenu');
+             // 如果 HTML 還沒加 id="userMenu" 的容器，先跳出避免報錯
+             if (!menuContainer) return; 
+
+             if (!currentUser) {
+        // 未登入狀態：顯示登入按鈕
+        menuContainer.innerHTML = `
+            <button class="user-btn" onclick="switchView('loginSection')">${t('btn_login_nav')}</button>
+        `;
+         } else {
+        // 已登入狀態：顯示帳號下拉選單
+        const displayName = currentUser === 'admin' ? '👨‍🔧 技師' : `👤 ${currentUser}`;
+        menuContainer.innerHTML = `
+            <div class="dropdown" id="userDropdown">
+                <button class="user-btn" onclick="toggleUserDropdown(event)">
+                    ${displayName} ▾
+                </button>
+                <div class="dropdown-content">
+                    <div onclick="logout()">${t('btn_logout_nav')}</div>
+                    <div onclick="switchAccount()">${t('btn_switch_nav')}</div>
+                </div>
+            </div>
+                 `;
+             }
+        }
+
+// 切換下拉選單顯示/隱藏
+        function toggleUserDropdown(event) {
+         event.stopPropagation(); // 防止點擊事件冒泡到 window
+         document.getElementById('userDropdown').classList.toggle('show-dropdown');
+        }
+
+// 切換帳號邏輯
+        function switchAccount() {
+         currentUser = ""; 
+          document.getElementById('loginId').value = "";
+         document.getElementById('loginPwd').value = "";
+          switchView('loginSection');
+          renderUserMenu();
+        }
+
+// 點擊網頁其他地方時關閉選單
+        window.addEventListener('click', function() {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('show-dropdown');
+        });
 
         function handleRegister(event) {
             event.preventDefault();
@@ -343,18 +179,20 @@
             const pwd = document.getElementById('loginPwd').value;
 
             if (id === 'admin' && pwd === 'admin123') {
-                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); return;
+                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); renderUserMenu(); //
+                return;
             }
 
             if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
                 currentUser = id; document.getElementById('loginError').style.display = 'none'; switchView('mainMenuSection');
+                renderUserMenu();
             } else { 
                 document.getElementById('loginError').innerText = t('err_login');
                 document.getElementById('loginError').style.display = 'block'; 
             }
         }
 
-        function enterMemberPage() { renderMemberCenter(); switchView('memberSection'); }
+        function enterMemberPage() {checkAuth(() => { renderMemberCenter(); switchView('memberSection');}); }
 
         function renderMemberCenter() {
             let balance = localStorage.getItem('accountBalance') || '0';
@@ -516,7 +354,12 @@
             alert(t('alt_approve_ok1') + newBikeId + t('alt_approve_ok2')); 
             renderAdminDashboard(); 
         }
-
+        // 新增一個進入報修頁面的函式
+            function enterRepairPage() {
+            checkAuth(() => {
+            switchView('repairSection');
+            });
+        }
         function rejectBike(appId) {
             let reason = prompt(t('prompt_reject'));
             if (reason === null) return; 
@@ -623,6 +466,7 @@
         }
 
         function enterCarbonPage() {
+            checkAuth(() => {
             let today = new Date().toLocaleDateString();
             
             if (localStorage.getItem('NCU_CarbonDate') !== today) {
@@ -634,10 +478,9 @@
             document.getElementById('totalCarbon').innerText = localStorage.getItem('NCU_TotalCarbon') || '0';
             
             switchView('carbonSection');
+            });
         }
 
         // 初始化預設為中文
-        changeLang('zh');
-    </script>
-</body>
-</html>
+        changeLang('zh'); 
+        renderUserMenu(); // <--- 確保網頁重新整理時也會跑一次

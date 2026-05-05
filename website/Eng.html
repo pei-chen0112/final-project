@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中大愛心綠色腳踏車系統</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="Style.css">
+   
+</head>
+<body>
+    <div class="lang-switch">
+            <select onchange="changeLang(this.value)">
+                <option value="zh">🇹🇼 中文</option>
+                <option value="en">🇺🇸 English</option>
+            </select>
+        </div>
+    <section id="loginSection" class="view-section auth-container" style="position: relative;">
+        
+
+        <div class="card">
+            <h2>🚲 NCU Green Love Bikes</h2>
+            <p style="font-size: 12px; color: #666; margin-top: -5px;" data-i18n="login_sub">中大愛心綠色腳踏車</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group"><label data-i18n="id_label">學號 / 帳號</label><input type="text" id="loginId" data-i18n-ph="id_ph" placeholder="技師請輸入 admin" required></div>
+                <div class="input-group"><label data-i18n="pwd_label">密碼</label><input type="password" id="loginPwd" data-i18n-ph="pwd_ph" placeholder="技師密碼 admin123" required></div>
+                <div id="loginError" style="color:red; display:none; font-size:13px; margin-bottom:10px;" data-i18n="err_login">帳密錯誤或尚未註冊</div>
+                <button type="submit" class="btn btn-green" data-i18n="login_btn">登入系統</button>
+            </form>
+            <div class="link-text" onclick="switchView('registerSection')" data-i18n="go_reg">還沒有帳號？ 前往註冊</div>
+            <div class="link-text" style="color: #F44336; margin-top: 5px;" onclick="alert(t('alt_forget'))" data-i18n="forget_pwd">忘記密碼</div>
+        </div>
+    </section>
+
+    <section id="registerSection" class="view-section auth-container">
+        <div class="card">
+            <h2 data-i18n="reg_title">📝 新增學生帳號</h2>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group"><label data-i18n="reg_id_label">設定學號</label><input type="text" id="regId" required></div>
+                <div class="input-group"><label data-i18n="reg_pwd_label">設定密碼</label><input type="password" id="regPwd" required></div>
+                <button type="submit" class="btn btn-orange" data-i18n="reg_btn">立即開通帳號</button>
+            </form>
+            <div class="link-text" onclick="switchView('loginSection')" data-i18n="back_login">返回登入</div>
+        </div>
+    </section>
+
+    <section id="mainMenuSection" class="view-section active-view">
+       <header>
+        <div class="user-menu-container" id="userMenu"></div>
+        <h1 data-i18n="menu_title">中大愛心綠色腳踏車</h1>
+    </header>
+
+    <div class="content-area">
+    <article class="story-section">
+        <h1 class="story-title" data-i18n="story_title">讓校園再次「綠」起來：重拾中央小綠綠的單車回憶</h1>
+        
+        <!-- 圖片區 1 -->
+        <div class="story-image-container">
+            <img src="主任們騎腳踏車.jpg" alt="中央小綠綠回憶圖" class="story-img">
+            <p class="img-caption" data-i18n="img_caption1">回憶中穿梭在松林間的翠綠身影</p>
+        </div>
+
+        <p class="story-p" data-i18n="story_p1">如果你是在 2010 年左右漫步在中央大學的校園，你一定會注意到那一抹穿梭在松林間的鮮豔色彩——「中央小綠綠」。</p>
+
+        <h2 class="story-sub" data-i18n="story_sub1">什麼是「中央小綠綠」？</h2>
+        <p class="story-p" data-i18n="story_p2">「中央小綠綠」是中央大學於 2010 年前後發起的校園綠色腳踏車計畫。在那個 YouBike 尚未普及的年代，學校為了推廣低碳校園、減輕校內機車負擔，特別購置了一批翠綠色的單車。這些腳踏車採取「公共共享」的概念，讓學生與教職員能自由騎乘於教學區、宿舍與餐廳之間，是許多中大人心中共同的校園標誌。</p>
+
+        <!-- 圖片區 2 -->
+        <div class="story-image-container">
+            <img src="小綠綠.png" alt="中央小綠綠" class="story-img">
+        </div>
+
+        <p class="story-p" data-i18n="story_p3">然而，隨著時間推移，車輛損耗、維護經費不足以及管理機制等挑戰，讓這群綠色身影逐漸消失在校園的角落，最終走入了歷史。</p>
+
+        <h2 class="story-sub" data-i18n="story_sub2">我們的目標：復活綠色傳奇</h2>
+        <p class="story-p" data-i18n="story_p3">雖然「小綠綠」退場了，但當初那份永續校園與共享便捷的初心不應被遺忘。在 2026 年的今天，面對氣候變遷與減碳轉型的浪潮，我們立志要「復活中央小綠綠計畫」。</p>
+
+        <p class="story-p" data-i18n="story_p3">我們不只是想帶回那輛腳踏車，更是要結合現代的數位管理與社群力量：</p>
+
+        <ul class="goal-list">
+            <li data-i18n="goal_1"><strong>優化管理：</strong> 引入智慧門鎖與 App 追蹤，解決當年車輛遺失與維修不明的問題。</li>
+            <li data-i18n="goal_2"><strong>循環經濟：</strong> 建立校內維修社群，讓修車成為一種技能傳承，減少資源浪費。</li>
+            <li data-i18n="goal_3"><strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。</li>
+        </ul>
+    </article>
+</div>
+
+    <nav class="side-nav">
+        <div class="nav-item" onclick="enterMap()">
+            <span class="nav-icon">🚲</span>
+            <span class="nav-text" data-i18n="menu_map">地圖尋車</span>
+        </div>
+        <div class="nav-item" onclick="enterMemberPage()">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text" data-i18n="menu_member">會員專區</span>
+        </div>
+        <div class="nav-item" onclick="enterRepairPage()">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text" data-i18n="menu_repair">車輛報修</span>
+        </div>
+        <div class="nav-item" onclick="enterCarbonPage()">
+            <span class="nav-icon">🌍</span>
+            <span class="nav-text" data-i18n="menu_carbon">減碳貢獻</span>
+        </div>
+    </nav>
+    </section>
+
+    <section id="carbonSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="carbon_title">減碳貢獻</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="carbon_h3">🌍 您的綠色足跡</h3>
+            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.6;" data-i18n="carbon_p">
+                依據歐洲自行車聯盟的研究基準，以自行車取代燃油車，平均每騎乘 1 公里可減少約 <strong>250 克</strong> 的碳排放。
+            </p>
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center;">
+                <p style="margin: 0; color: #2e7d32; font-size: 14px;" data-i18n="carbon_today">本日節碳量</p>
+                <h2 style="margin: 5px 0; color: #1b5e20; font-size: 36px;"><span id="dailyCarbon">0</span> <span style="font-size:16px;" data-i18n="carbon_unit">克</span></h2>
+            </div>
+            <div style="background: #f4f4f9; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: center; border: 1px solid #ddd;">
+                <p style="margin: 0; color: #555; font-size: 14px;" data-i18n="carbon_total">累積總節碳量</p>
+                <h2 style="margin: 5px 0; color: #333; font-size: 36px;"><span id="totalCarbon">0</span> <span style="font-size:16px;" data-i18n="carbon_unit2">克</span></h2>
+            </div>
+        </div>
+    </section>
+
+    <section id="memberSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="member_title">會員專區</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <div id="memberDisplay" style="width: 100%;"></div>
+            <div class="upload-box" style="margin-top: 30px;">
+                <h4 style="margin-top: 0; color: #2e7d32;" data-i18n="reclaim_title">🚲 回收校園廢棄車輛</h4>
+                <p style="font-size: 13px; color: #555; line-height: 1.5;" data-i18n="reclaim_desc">
+                    1. 牽至【校內修理站】進行規格改裝。<br>2. 註冊系統並安裝 GPS 電子鎖。<br>技師上架後，系統自動回饋 <strong>$50 帳戶儲值金</strong>！
+                </p>
+                <button class="btn btn-green" onclick="switchView('uploadBikeSection')" data-i18n="reclaim_btn">前往填寫回收申請單</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="uploadBikeSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('memberSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="upload_title">車輛照片上傳</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="color: #2e7d32; margin-top: 0;" data-i18n="upload_h3">📸 提供車輛檢測照片</h3>
+            <p style="font-size: 13px; color: gray; text-align: left; line-height: 1.5; margin-bottom: 20px;" data-i18n="upload_desc">
+                為確保車輛符合改裝標準，請上傳 3 張清晰的車輛照片。審核通過後，方可牽至修理站。
+            </p>
+            
+            <div class="input-group">
+                <label data-i18n="pic1_label">1. 車輛正面照</label>
+                <input type="file" id="bikePic1" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
+            </div>
+            <div class="input-group">
+                <label data-i18n="pic2_label">2. 車輛側面照</label>
+                <input type="file" id="bikePic2" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
+            </div>
+            <div class="input-group">
+                <label data-i18n="pic3_label">3. 局部特寫 / 損壞處</label>
+                <input type="file" id="bikePic3" accept="image/*" style="font-size: 13px; padding: 8px; cursor: pointer;">
+            </div>
+            
+            <button class="btn btn-orange" onclick="confirmBikeUpload()" data-i18n="upload_submit">確認上傳並送出申請</button>
+        </div>
+    </section>
+
+    <section id="repairSection" class="view-section">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="repair_title">車輛報修</h1></header>
+        <div class="page-content card" style="margin-top: 30px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;" data-i18n="repair_warn">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
+            <div class="input-group"><label data-i18n="rep_id_label">故障車牌號碼</label><input type="text" id="repairBikeId" data-i18n-ph="rep_id_ph" placeholder="例如: NCU-001"></div>
+            <div class="input-group"><label data-i18n="rep_desc_label">損壞狀況描述</label><input type="text" id="repairDesc" data-i18n-ph="rep_desc_ph" placeholder="例如: 煞車失靈"></div>
+            <button class="btn btn-orange" onclick="submitRepair()" data-i18n="repair_btn">通報損壞腳踏車</button>
+        </div>
+    </section>
+
+    <section id="adminSection" class="view-section">
+        <header>
+            <button class="back-btn" onclick="logout()" data-i18n="logout">登出</button>
+            <h1 data-i18n="admin_title">👨‍🔧 腳踏車修理站 - 技師管理後台</h1>
+        </header>
+        <div class="admin-panel">
+            <div class="admin-card">
+                <h3 data-i18n="admin_appr_title">🚲 待改裝與註冊車輛 (已附照片)</h3>
+                <table>
+                    <thead><tr><th data-i18n="th_student">申請學生</th><th data-i18n="th_time">申請時間</th><th data-i18n="th_action">操作</th></tr></thead>
+                    <tbody id="adminApprovalTable"></tbody>
+                </table>
+            </div>
+            <div class="admin-card" style="border-left-color: #F44336;">
+                <h3 data-i18n="admin_rep_title">🔧 待修復車輛清單</h3>
+                <table>
+                    <thead><tr><th data-i18n="th_bike">報修車號</th><th data-i18n="th_desc">損壞描述</th><th data-i18n="th_action">操作</th></tr></thead>
+                    <tbody id="adminRepairTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="mapSection" class="view-section" style="position: relative;">
+        <header><button class="back-btn" onclick="switchView('mainMenuSection')" data-i18n="back">❮ 返回</button><h1 data-i18n="map_title">地圖尋車</h1></header>
+        <div id="map"></div>
+
+        <div id="rentVerifyPanel">
+            <h3 style="color: #0072C6;" data-i18n="unlock_title">解鎖車輛</h3>
+            <p style="font-size: 12px; color: gray;" data-i18n="unlock_desc">無固定站點借還，單次騎乘將扣除帳戶餘額 <strong style="color:#0072C6;">$5</strong></p>
+            <div class="input-group"><label data-i18n="plate_label">車牌號碼</label><input type="text" id="inputPlateNum" readonly style="background:#f0f0f0;"></div>
+            <p style="font-size: 12px; color: #F44336; margin-bottom: 5px; text-align: left;" data-i18n="pwd_warn">*請查看實體腳踏車電子螢幕上的 4 位數密碼</p>
+            <div class="input-group"><input type="password" id="inputEPassword" data-i18n-ph="pwd_ph2" placeholder="輸入電子密碼" required></div>
+            <button class="btn" style="background-color: #0072C6;" onclick="confirmRent()" data-i18n="unlock_btn">帳戶餘額付款並解鎖</button>
+            <button class="btn" style="background: #ccc; color: #333;" onclick="closeRentPanel()" data-i18n="cancel_btn">取消</button>
+        </div>
+
+        <div id="activeRidePanel">
+            <h2><span data-i18n="riding_title">🚲 騎乘中：</span><span id="rentedBikeId"></span></h2>
+            <div class="timer" id="rideTimer">00:00</div>
+            <p style="font-size: 12px; color: gray; margin-top: -5px;" data-i18n="gps_monitor">GPS 追蹤監控運行中</p>
+            <button class="btn btn-red" onclick="returnBike()" data-i18n="return_btn">⏹️ 結束騎乘並 GPS 還車</button>
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
