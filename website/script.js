@@ -397,6 +397,35 @@
                     if(serverBikeDatabase[bikeId].status === "active") createBikeMarker(bikeId, serverBikeDatabase[bikeId].lat, serverBikeDatabase[bikeId].lng, icon); 
                 }
                 isMapInitialized = true;
+
+                // =======================================================
+                // 📡 第二步加在這裡：MQTT 監聽腳踏車即時位置 (確保地圖建立後才執行)
+                // =======================================================
+                let movingBikeMarker = null;
+                const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+                const topicName = 'ncu/greenbike/demo/haoen'; // 專屬頻道
+
+                mqttClient.on('connect', () => {
+                    console.log("✅ 廣播中心連線成功！正在監聽同學的手機訊號...");
+                    mqttClient.subscribe(topicName);
+                });
+
+                mqttClient.on('message', (topic, message) => {
+                    const data = JSON.parse(message.toString());
+                    console.log("📍 收到新座標：", data);
+
+                    // 在地圖上生出一台藍色大頭針代表移動中的腳踏車，並跟著移動
+                    if (movingBikeMarker === null) {
+                        movingBikeMarker = L.marker([data.lat, data.lng]).addTo(map)
+                            .bindPopup("<b>🚲 同學騎乘中</b><br>正在即時更新座標！").openPopup();
+                    } else {
+                        movingBikeMarker.setLatLng([data.lat, data.lng]);
+                    }
+                    
+                    // 讓畫面自動置中跟著腳踏車跑 (視覺效果極佳)
+                    map.setView([data.lat, data.lng], 18); 
+                });
+                // =======================================================
             }
             setTimeout(() => { map.invalidateSize(); }, 100);
         }

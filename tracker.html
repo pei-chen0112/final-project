@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>組員 GPS 發報器</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body style="text-align: center; font-family: sans-serif; padding: 30px; background-color: #f4f4f9;">
+    
+    <h2 style="color: #2e7d32;">🚲 腳踏車遙控器</h2>
+    <p style="color: #666; font-size: 14px;">請保持螢幕亮著，並帶著手機走動</p>
+
+    <button id="startBtn" onclick="startTracking()" style="padding: 20px 40px; font-size: 20px; background-color: #F57C00; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px;">
+        🚀 開始傳送座標
+    </button>
+    
+    <div id="status" style="margin-top: 30px; font-size: 18px; font-weight: bold; color: #333;">等待指示中...</div>
+
+    <script>
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        const topicName = 'ncu/greenbike/demo/haoen'; // 頻道必須跟電腦端一模一樣
+
+        client.on('connect', () => {
+            document.getElementById('status').innerText = "✅ 廣播電台就緒，隨時可出發！";
+        });
+
+        function startTracking() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('status').innerHTML = "📡 正在鎖定 GPS 衛星...<br><span style='font-size:12px; color:gray;'>(可能需要幾秒鐘)</span>";
+
+            navigator.geolocation.watchPosition((position) => {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+                document.getElementById('status').innerText = `📍 發送中: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+                // 把座標打包發射出去
+                let payload = JSON.stringify({ lat: lat, lng: lng });
+                client.publish(topicName, payload);
+
+            }, (error) => {
+                document.getElementById('status').innerText = "❌ 定位失敗: 請確認手機有開 GPS 權限";
+            }, { enableHighAccuracy: true });
+        }
+    </script>
+</body>
+</html>
