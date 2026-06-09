@@ -35,6 +35,11 @@
                 nav_donate: "捐車規範",
                  nav_guide: "使用說明",
                  nav_contact: "聯絡我們",
+                 footer_terms: "服務條款",
+                footer_privacy: "隱私權政策",
+                footer_contact: "聯絡客服",
+                footer_copy: "© 2026 國立中央大學 National Central University. All Rights Reserved.",
+                footer_disclaimer: "*本網站為專案展示，非學校官方正式營運系統。",
                  nav_faq: "常見問題"
             },
             en: {
@@ -67,6 +72,11 @@
                 nav_donate: "Donation Rules",
         nav_guide: "User Guide",
         nav_contact: "Contact Us",
+        footer_terms: "Terms of Service",
+footer_privacy: "Privacy Policy",
+footer_contact: "Contact Support",
+footer_copy: "© 2026 National Central University. All Rights Reserved.",
+footer_disclaimer: "*This website is a project demo and not an official university system.",
         nav_faq: "FAQ"        
             }
         };
