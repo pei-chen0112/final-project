@@ -277,14 +277,14 @@ body {
 /* 調整原本的 content-area 確保不會被右側選單蓋住 */
 .content-area {
     padding: 20px;
-    margin-right: 100px; /* 預留給側邊選單的空間 */
-    padding-bottom: 100px; /* 預留底部空間防止被截斷 */
+    margin-left: 100px; /* <--- 這裡改 margin-left，留出左側選單的空間 */
+    padding-bottom: 100px; 
 }
 
 /* 手機版適應：當螢幕太小時，將右側邊距縮小 */
 @media (max-width: 600px) {
     .content-area {
-        margin-right: 70px;
+        margin-left: 70px; /* <--- 這裡改 margin-left */
         padding: 10px;
     }
     .story-title { font-size: 20px; }
@@ -293,12 +293,12 @@ body {
 /* ==================== 側邊導航按鈕 (大大大升級版) ==================== */
 .side-nav {
     position: fixed;
-    right: 25px; 
-    top: 50%;
+    left: 25px; /* <--- 這裡改 left */
+    top: 60%;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 20px; /* 按鈕間距加大 */
+    gap: 20px; 
     z-index: 999;
 }
 
@@ -559,7 +559,13 @@ body {
     margin-top: 15px; /* 對齊圖示的高度 */
     user-select: none;
 }
-
+/* ==================== 7. Botpress AI 客服泡泡位置覆寫 ==================== */
+/* 強制將 Botpress 的外層容器從右邊移到左邊 */
+#bp-web-widget-container, 
+#bp-web-widget {
+    right: auto !important;  /* 取消原本靠右的設定 */
+    left: 20px !important;   /* 強制靠左，並距離左邊緣 20px */
+}
 /* 手機版響應式設計：改為垂直排列 */
 @media (max-width: 650px) {
     .step-row {
