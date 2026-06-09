@@ -398,12 +398,11 @@
                 }
                 isMapInitialized = true;
 
+               // =======================================================
+                // 📡 MQTT 監聽腳踏車即時位置 (合體升級版)
                 // =======================================================
-                // 📡 第二步加在這裡：MQTT 監聽腳踏車即時位置 (確保地圖建立後才執行)
-                // =======================================================
-                let movingBikeMarker = null;
                 const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-                const topicName = 'ncu/greenbike/demo/haoen'; // 專屬頻道
+                const topicName = 'ncu/greenbike/demo/haoen'; // 你的專屬頻道
 
                 mqttClient.on('connect', () => {
                     console.log("✅ 廣播中心連線成功！正在監聽同學的手機訊號...");
@@ -414,17 +413,29 @@
                     const data = JSON.parse(message.toString());
                     console.log("📍 收到新座標：", data);
 
-                    // 在地圖上生出一台藍色大頭針代表移動中的腳踏車，並跟著移動
-                    if (movingBikeMarker === null) {
-                        movingBikeMarker = L.marker([data.lat, data.lng]).addTo(map)
-                            .bindPopup("<b>🚲 同學騎乘中</b><br>正在即時更新座標！").openPopup();
-                    } else {
-                        movingBikeMarker.setLatLng([data.lat, data.lng]);
+                    // 🌟 核心魔法：指定我們要操控的原本車牌 (例如 NCU-001)
+                    let targetBikeId = "NCU-001";
+
+                    // 1. 同步更新後端資料庫的座標紀錄
+                    if (serverBikeDatabase[targetBikeId]) {
+                        serverBikeDatabase[targetBikeId].lat = data.lat;
+                        serverBikeDatabase[targetBikeId].lng = data.lng;
+                    }
+
+                    // 2. 檢查地圖上是不是已經有這台車了？如果有，直接抓住它移動！
+                    if (bikeMarkers[targetBikeId]) {
+                        bikeMarkers[targetBikeId].setLatLng([data.lat, data.lng]);
+                    } 
+                    // 如果因為某些原因 (例如被別人租走隱藏了) 找不到圖標，就重新畫出來
+                    else {
+                        let icon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3198/3198336.png', iconSize: [40, 40], iconAnchor: [20, 40] });
+                        createBikeMarker(targetBikeId, data.lat, data.lng, icon);
                     }
                     
-                    // 讓畫面自動置中跟著腳踏車跑 (視覺效果極佳)
+                    // 3. 讓畫面自動置中跟著這台腳踏車跑 (視覺效果極佳)
                     map.setView([data.lat, data.lng], 18); 
                 });
+                // =======================================================
                 // =======================================================
             }
             setTimeout(() => { map.invalidateSize(); }, 100);
