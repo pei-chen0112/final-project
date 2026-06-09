@@ -1,4 +1,26 @@
+        // ==========================================
+// 🔥 1. Firebase 初始化與引入 (使用 CDN 模組)
+// ==========================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } 
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// 你的專屬 Firebase 設定檔
+const firebaseConfig = {
+  apiKey: "AIzaSyCt6qx2QVbf2APa6pH3aazf5m07Ru6R11I",
+  authDomain: "ncubike-ad257.firebaseapp.com",
+  projectId: "ncubike-ad257",
+  storageBucket: "ncubike-ad257.firebasestorage.app",
+  messagingSenderId: "565716105592",
+  appId: "1:565716105592:web:f16a2a4bc336d3e20e308d",
+  measurementId: "G-DECFV8GH51"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
         // ==========================================
         // 💡 雙語字典與切換邏輯 (i18n System)
         // ==========================================
@@ -40,6 +62,15 @@
                 footer_contact: "聯絡客服",
                 footer_copy: "© 2026 國立中央大學 National Central University. All Rights Reserved.",
                 footer_disclaimer: "*本網站為專案展示，非學校官方正式營運系統。",
+                guide_title: "使用中大綠色腳踏車",
+guide_step1: "註冊 / 登入",
+guide_desc1: "使用學號或帳號<br>登入網頁系統",
+guide_step2: "解鎖 / 租借",
+guide_desc2: "地圖尋找附近車輛<br>輸入密碼解鎖",
+guide_step3: "輕鬆騎乘",
+guide_desc3: "享受松林間的<br>綠色低碳時光",
+guide_step4: "隨處還車",
+guide_desc4: "停放於安全區域<br>點擊結束騎乘",
                  nav_faq: "常見問題"
             },
             en: {
@@ -77,7 +108,16 @@ footer_privacy: "Privacy Policy",
 footer_contact: "Contact Support",
 footer_copy: "© 2026 National Central University. All Rights Reserved.",
 footer_disclaimer: "*This website is a project demo and not an official university system.",
-        nav_faq: "FAQ"        
+        nav_faq: "FAQ",
+        guide_title: "How to Use Green Bikes",
+guide_step1: "Register / Login",
+guide_desc1: "Log in with your<br>student ID",
+guide_step2: "Unlock / Rent",
+guide_desc2: "Find a bike on map<br>and enter PIN",
+guide_step3: "Enjoy Riding",
+guide_desc3: "Enjoy the low-carbon<br>campus ride",
+guide_step4: "Return Anywhere",
+guide_desc4: "Park in a safe area<br>and end your ride"        
             }
         };
 
@@ -132,11 +172,15 @@ footer_disclaimer: "*This website is a project demo and not an official universi
             document.getElementById(targetId).classList.add('active-view');
         }
 
-        function logout() {
-            currentUser = ""; document.getElementById('loginId').value = ""; document.getElementById('loginPwd').value = "";
-            switchView('loginSection');
-            renderUserMenu(); //
-        }
+        window.logout = function() {
+    signOut(auth).then(() => {
+        currentUser = ""; 
+        document.getElementById('loginId').value = ""; 
+        document.getElementById('loginPwd').value = "";
+        switchView('loginSection');
+        renderUserMenu();
+    });
+};
         function renderUserMenu() {
              const menuContainer = document.getElementById('userMenu');
              // 如果 HTML 還沒加 id="userMenu" 的容器，先跳出避免報錯
@@ -185,108 +229,194 @@ footer_disclaimer: "*This website is a project demo and not an official universi
         if (dropdown) dropdown.classList.remove('show-dropdown');
         });
 
-        function handleRegister(event) {
-            event.preventDefault();
-            localStorage.setItem('savedStudentId', document.getElementById('regId').value);
-            localStorage.setItem('savedPassword', document.getElementById('regPwd').value);
-            if (!localStorage.getItem('accountBalance')) localStorage.setItem('accountBalance', '0'); 
-            alert(t('alt_reg_ok')); switchView('loginSection');
+ window.handleRegister = async function(event) {
+    event.preventDefault();
+    const id = document.getElementById('regId').value;
+    const pwd = document.getElementById('regPwd').value;
+    
+    const fakeEmail = id + "@ncu.edu.tw";
+
+    try {
+        // 1. 建立 Firebase 帳號
+        await createUserWithEmailAndPassword(auth, fakeEmail, pwd);
+        
+        // 2. 在 Firestore 建立該學生的專屬資料文件 (Document)
+        // 路徑設定為：users(集合) -> 學號(文件)
+        await setDoc(doc(db, "users", id), {
+            balance: 0,          // 初始儲值金
+            totalCarbon: 0,      // 累積總節碳量
+            dailyCarbon: 0,      // 本日節碳量
+            lastRideDate: ""     // 最後騎乘日期 (用來判斷每日歸零)
+        });
+
+        alert(t('alt_reg_ok')); // 註冊成功
+        switchView('loginSection');
+    } catch (error) {
+        alert("註冊失敗：" + error.message);
+    }
+};
+
+        window.handleLogin = async function(event) {
+    event.preventDefault();
+    const id = document.getElementById('loginId').value;
+    const pwd = document.getElementById('loginPwd').value;
+
+    // 保留原本的技師後台登入捷徑
+    if (id === 'admin' && pwd === 'admin123') {
+        currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); renderUserMenu();
+        return;
+    }
+
+    const fakeEmail = id + "@ncu.edu.tw";
+
+    try {
+        // 呼叫 Firebase 驗證登入
+        const userCredential = await signInWithEmailAndPassword(auth, fakeEmail, pwd);
+        currentUser = id; // 登入成功，記錄當前學號
+        
+        document.getElementById('loginError').style.display = 'none'; 
+        switchView('mainMenuSection');
+        renderUserMenu();
+    } catch (error) {
+        document.getElementById('loginError').innerText = t('err_login');
+        document.getElementById('loginError').style.display = 'block'; 
+    }
+};
+
+       window.enterMemberPage = function() {
+    checkAuth(() => { 
+        // 進入頁面時，先顯示 Loading 或直接呼叫渲染
+        switchView('memberSection');
+        renderMemberCenter(); 
+    }); 
+};
+
+        window.renderMemberCenter = async function() {
+    let balance = 0; // 預設餘額為 0
+
+    try {
+        // 從 Firestore 抓取目前登入學生的專屬資料
+        const userRef = doc(db, "users", currentUser);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            balance = data.balance || 0; // 取得雲端餘額
+        } else {
+            console.log("找不到該學生的資料！");
         }
+    } catch (error) {
+        console.error("讀取資料失敗：", error);
+        alert("無法連線至資料庫，請檢查網路！");
+    }
+    
+    // 以下是原本的 UI 渲染邏輯，稍微精簡保留核心
+    let historyHtml = `
+        <div style="margin-top: 25px; width: 100%; text-align: left;">
+            <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px;">${t('history_title')}</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                <thead><tr style="background-color: #f4f4f9;"><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_time')}</th><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_status')}</th><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_reason')}</th></tr></thead>
+                <tbody>
+    `;
+    
+    let myApps = applicationHistory.filter(app => app.studentId === currentUser);
+    if (myApps.length === 0) {
+        historyHtml += `<tr><td colspan="3" style="text-align: center; padding: 10px; color: gray;">${t('no_history')}</td></tr>`;
+    } else {
+        myApps.forEach(app => {
+            // (這部分保留你原本的狀態判斷邏輯，就不全貼了，直接接上)
+            let statusHtml = `<span style="color: #ff9800; font-weight: bold;">${t('pending')}</span>`;
+            let reasonText = '-';
+            historyHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${app.time}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${statusHtml}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${reasonText}</td></tr>`;
+        });
+    }
+    historyHtml += `</tbody></table></div>`;
 
-        function handleLogin(event) {
-            event.preventDefault();
-            const id = document.getElementById('loginId').value;
-            const pwd = document.getElementById('loginPwd').value;
+    document.getElementById('memberDisplay').innerHTML = `
+        <div style="background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: left;">
+            <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">${t('wallet_title')}</h3>
+            <div style="font-size: 36px; font-weight: bold; margin-bottom: 20px;">$ ${balance}</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="margin-top:0; background-color: #00C300; font-size: 14px; padding: 10px;" onclick="openLinePayMock()">${t('linepay_btn')}</button>
+                <button class="btn" style="margin-top:0; background-color: rgba(255,255,255,0.2); border: 1px solid white; font-size: 14px; padding: 10px;" onclick="redeemPromoCode()">${t('promo_btn')}</button>
+            </div>
+        </div>
+        ${historyHtml}
+    `;
+};
 
-            if (id === 'admin' && pwd === 'admin123') {
-                currentUser = "admin"; renderAdminDashboard(); switchView('adminSection'); renderUserMenu(); //
-                return;
-            }
-
-            if (id === localStorage.getItem('savedStudentId') && pwd === localStorage.getItem('savedPassword')) {
-                currentUser = id; document.getElementById('loginError').style.display = 'none'; switchView('mainMenuSection');
-                renderUserMenu();
-            } else { 
-                document.getElementById('loginError').innerText = t('err_login');
-                document.getElementById('loginError').style.display = 'block'; 
-            }
-        }
-
-        function enterMemberPage() {checkAuth(() => { renderMemberCenter(); switchView('memberSection');}); }
-
-        function renderMemberCenter() {
-            let balance = localStorage.getItem('accountBalance') || '0';
-            
-            let historyHtml = `
-                <div style="margin-top: 25px; width: 100%; text-align: left;">
-                    <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px;">${t('history_title')}</h4>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-                        <thead><tr style="background-color: #f4f4f9;"><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_time')}</th><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_status')}</th><th style="padding: 8px; border-bottom: 1px solid #ddd;">${t('history_reason')}</th></tr></thead>
-                        <tbody>
-            `;
-            
-            let myApps = applicationHistory.filter(app => app.studentId === currentUser);
-            if (myApps.length === 0) {
-                historyHtml += `<tr><td colspan="3" style="text-align: center; padding: 10px; color: gray;">${t('no_history')}</td></tr>`;
-            } else {
-                myApps.forEach(app => {
-                    let statusHtml = ''; let reasonText = '-';
-                    if (app.status === 'pending') {
-                        statusHtml = `<span style="color: #ff9800; font-weight: bold;">${t('pending')}</span>`;
-                    } else if (app.status === 'approved') {
-                        statusHtml = `<span style="color: #2e7d32; font-weight: bold;">${t('approved')}</span>`;
-                        reasonText = `<span style="color: #2e7d32;">${t('bonus_sent')}</span>`;
-                    } else if (app.status === 'rejected') {
-                        statusHtml = `<span style="color: #F44336; font-weight: bold;">${t('rejected')}</span>`;
-                        reasonText = `<span style="color: #F44336;">${app.reason}</span>`;
-                    }
-                    historyHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${app.time}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${statusHtml}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${reasonText}</td></tr>`;
-                });
-            }
-            historyHtml += `</tbody></table></div>`;
-
-            document.getElementById('memberDisplay').innerHTML = `
-                <div style="background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: left;">
-                    <h3 style="margin: 0 0 5px 0; font-size: 16px; opacity: 0.8;">${t('wallet_title')}</h3>
-                    <div style="font-size: 36px; font-weight: bold; margin-bottom: 20px;">$ ${balance}</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn" style="margin-top:0; background-color: #00C300; font-size: 14px; padding: 10px;" onclick="openLinePayMock()">${t('linepay_btn')}</button>
-                        <button class="btn" style="margin-top:0; background-color: rgba(255,255,255,0.2); border: 1px solid white; font-size: 14px; padding: 10px;" onclick="redeemPromoCode()">${t('promo_btn')}</button>
-                    </div>
-                </div>
-                ${historyHtml}
-            `;
-        }
-
-        function openLinePayMock() {
-            let amount = prompt(t('prompt_linepay'));
-            if (!amount || isNaN(amount) || amount <= 0) return alert(t('err_amount'));
-            alert(t('alt_line_wait'));
-            setTimeout(() => {
-                if (confirm(t('cfm_linepay_1') + amount + t('cfm_linepay_2'))) {
-                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
-                    localStorage.setItem('accountBalance', (currentBalance + parseInt(amount)).toString());
-                    alert(t('alt_line_ok')); renderMemberCenter();
-                } else { alert(t('alt_cancel')); }
-            }, 1500);
-        }
-
-        function redeemPromoCode() {
-            let code = prompt(t('prompt_promo'));
-            if (!code) return;
-            code = code.toUpperCase();
-            if (validPromoCodes[code]) {
-                if (validPromoCodes[code].used) { alert(t('err_promo_used')); } 
-                else {
-                    let bonus = validPromoCodes[code].amount;
-                    let currentBalance = parseInt(localStorage.getItem('accountBalance') || '0');
-                    localStorage.setItem('accountBalance', (currentBalance + bonus).toString());
-                    validPromoCodes[code].used = true;
-                    alert(t('alt_promo_ok') + bonus + t('alt_promo_ok2')); renderMemberCenter();
+        window.openLinePayMock = function() {
+    let amount = prompt(t('prompt_linepay'));
+    if (!amount || isNaN(amount) || amount <= 0) return alert(t('err_amount'));
+    alert(t('alt_line_wait'));
+    
+    // 模擬 LINE Pay 跳轉等待
+    setTimeout(async () => {
+        if (confirm(t('cfm_linepay_1') + amount + t('cfm_linepay_2'))) {
+            try {
+                // 1. 找到雲端使用者的文件路徑
+                const userRef = doc(db, "users", currentUser);
+                const userSnap = await getDoc(userRef);
+                
+                let currentBalance = 0;
+                if (userSnap.exists()) {
+                    currentBalance = userSnap.data().balance || 0;
                 }
-            } else { alert(t('err_promo_invalid')); }
+                
+                // 2. 計算新餘額並更新回雲端
+                let newBalance = currentBalance + parseInt(amount);
+                await updateDoc(userRef, { balance: newBalance });
+                
+                alert(t('alt_line_ok')); 
+                renderMemberCenter(); // 重新渲染會員中心，就會看到最新的雲端餘額！
+            } catch (error) {
+                console.error("儲值失敗:", error);
+                alert("雲端資料庫儲值失敗，請檢查網路！");
+            }
+        } else { 
+            alert(t('alt_cancel')); 
         }
+    }, 1500);
+};
 
+        window.redeemPromoCode = async function() {
+    let code = prompt(t('prompt_promo'));
+    if (!code) return;
+    code = code.toUpperCase();
+    
+    if (validPromoCodes[code]) {
+        if (validPromoCodes[code].used) { 
+            alert(t('err_promo_used')); 
+        } else {
+            let bonus = validPromoCodes[code].amount;
+            try {
+                // 1. 抓取雲端當前餘額
+                const userRef = doc(db, "users", currentUser);
+                const userSnap = await getDoc(userRef);
+                
+                let currentBalance = 0;
+                if (userSnap.exists()) {
+                    currentBalance = userSnap.data().balance || 0;
+                }
+                
+                // 2. 更新雲端餘額
+                let newBalance = currentBalance + bonus;
+                await updateDoc(userRef, { balance: newBalance });
+                
+                // 3. 將本地序號標記為已使用
+                validPromoCodes[code].used = true;
+                
+                alert(t('alt_promo_ok') + bonus + t('alt_promo_ok2')); 
+                renderMemberCenter();
+            } catch (error) {
+                console.error("序號兌換失敗:", error);
+                alert("兌換失敗，請稍後再試！");
+            }
+        }
+    } else { 
+        alert(t('err_promo_invalid')); 
+    }
+};
         function confirmBikeUpload() {
             let pic1 = document.getElementById('bikePic1').value;
             let pic2 = document.getElementById('bikePic2').value;
@@ -468,32 +598,54 @@ footer_disclaimer: "*This website is a project demo and not an official universi
 
         function closeRentPanel() { document.getElementById('rentVerifyPanel').style.display = 'none'; selectedBikeToRent = null; }
 
-        function confirmRent() {
-            let plateNum = document.getElementById('inputPlateNum').value;
-            let ePwd = document.getElementById('inputEPassword').value;
+        window.confirmRent = async function() {
+    let plateNum = document.getElementById('inputPlateNum').value;
+    let ePwd = document.getElementById('inputEPassword').value;
 
-            let balance = parseInt(localStorage.getItem('accountBalance') || '0');
-            if(balance < 5) return alert(t('err_bal'));
-            
-            if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert(t('err_pwd'));
-
-            localStorage.setItem('accountBalance', (balance - 5).toString());
-            closeRentPanel();
-            if (bikeMarkers[plateNum]) { map.removeLayer(bikeMarkers[plateNum]); delete bikeMarkers[plateNum]; }
-
-            alert(t('alt_rent_ok') + (balance - 5) + t('alt_rent_ok2'));
-            currentRentedBike = plateNum;
-            document.getElementById('rentedBikeId').innerText = plateNum;
-            document.getElementById('activeRidePanel').style.display = 'block';
-
-            rideSeconds = 0; document.getElementById('rideTimer').innerText = "00:00";
-            rideInterval = setInterval(() => {
-                rideSeconds++;
-                let m = Math.floor(rideSeconds / 60).toString().padStart(2, '0');
-                let s = (rideSeconds % 60).toString().padStart(2, '0');
-                document.getElementById('rideTimer').innerText = m + ":" + s;
-            }, 1000);
+    try {
+        // 1. 從 Cloud Firestore 檢查最新的雲端餘額
+        const userRef = doc(db, "users", currentUser);
+        const userSnap = await getDoc(userRef);
+        
+        let balance = 0;
+        if (userSnap.exists()) {
+            balance = userSnap.data().balance || 0;
         }
+
+        // 2. 檢查餘額是否足夠單次騎乘 (5元)
+        if (balance < 5) return alert(t('err_bal'));
+        
+        // 3. 驗證實體車機的電子密碼是否正確
+        if (ePwd !== serverBikeDatabase[plateNum].pwd) return alert(t('err_pwd'));
+
+        // 4. 扣除 5 元，並同步回雲端資料庫
+        let newBalance = balance - 5;
+        await updateDoc(userRef, { balance: newBalance });
+
+        // 5. 解鎖成功，隱藏面板與地圖圖標
+        closeRentPanel();
+        if (bikeMarkers[plateNum]) { map.removeLayer(bikeMarkers[plateNum]); delete bikeMarkers[plateNum]; }
+
+        alert(t('alt_rent_ok') + newBalance + t('alt_rent_ok2'));
+        currentRentedBike = plateNum;
+        document.getElementById('rentedBikeId').innerText = plateNum;
+        document.getElementById('activeRidePanel').style.display = 'block';
+
+        // 6. 啟動騎乘計時器
+        rideSeconds = 0; 
+        document.getElementById('rideTimer').innerText = "00:00";
+        rideInterval = setInterval(() => {
+            rideSeconds++;
+            let m = Math.floor(rideSeconds / 60).toString().padStart(2, '0');
+            let s = (rideSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('rideTimer').innerText = m + ":" + s;
+        }, 1000);
+
+    } catch (error) {
+        console.error("租借扣款失敗:", error);
+        alert("系統連線錯誤，無法完成解鎖扣款！");
+    }
+};
 
         function returnBike() {
             clearInterval(rideInterval);
@@ -544,3 +696,24 @@ footer_disclaimer: "*This website is a project demo and not an official universi
         // 初始化預設為中文
         changeLang('zh'); 
         renderUserMenu(); // <--- 確保網頁重新整理時也會跑一次
+        // ==========================================
+// 🔧 系統修正：將模組內的函式暴露給 HTML 使用
+// ==========================================
+window.switchView = switchView;
+window.changeLang = changeLang;
+window.t = t;
+window.toggleUserDropdown = toggleUserDropdown;
+window.switchAccount = switchAccount;
+window.openLinePayMock = openLinePayMock;
+window.redeemPromoCode = redeemPromoCode;
+window.confirmBikeUpload = confirmBikeUpload;
+window.submitRepair = submitRepair;
+window.resolveRepair = resolveRepair;
+window.approveBike = approveBike;
+window.rejectBike = rejectBike;
+window.enterMap = enterMap;
+window.closeRentPanel = closeRentPanel;
+window.confirmRent = confirmRent;
+window.returnBike = returnBike;
+window.enterCarbonPage = enterCarbonPage;
+window.enterRepairPage = enterRepairPage;

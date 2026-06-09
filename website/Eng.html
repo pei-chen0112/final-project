@@ -61,6 +61,42 @@
         </ul>
     </nav>
     <div class="content-area">
+        <div class="step-guide-container">
+        <h2 class="guide-title" data-i18n="guide_title">使用中大綠色腳踏車</h2>
+        <div class="step-row">
+            <div class="step-box">
+                <div class="step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                </div>
+                <h4 data-i18n="guide_step1">註冊 / 登入</h4>
+                <p data-i18n="guide_desc1">使用學號或帳號<br>登入網頁系統</p>
+            </div>
+            <div class="step-arrow">〉</div>
+            <div class="step-box">
+                <div class="step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line><path d="M9 7h6"></path></svg>
+                </div>
+                <h4 data-i18n="guide_step2">解鎖 / 租借</h4>
+                <p data-i18n="guide_desc2">地圖尋找附近車輛<br>輸入密碼解鎖</p>
+            </div>
+            <div class="step-arrow">〉</div>
+            <div class="step-box">
+                <div class="step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="18.5" cy="17.5" r="3.5"></circle><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"></path></svg>
+                </div>
+                <h4 data-i18n="guide_step3">輕鬆騎乘</h4>
+                <p data-i18n="guide_desc3">享受松林間的<br>綠色低碳時光</p>
+            </div>
+            <div class="step-arrow">〉</div>
+            <div class="step-box">
+                <div class="step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+                <h4 data-i18n="guide_step4">隨處還車</h4>
+                <p data-i18n="guide_desc4">停放於安全區域<br>點擊結束騎乘</p>
+            </div>
+        </div>
+    </div>
     <article class="story-section">
         <h1 class="story-title" data-i18n="story_title">讓校園再次「綠」起來：重拾中央小綠綠的單車回憶</h1>
         
@@ -93,6 +129,7 @@
             <li data-i18n="goal_3"><strong>低碳生活：</strong> 讓腳踏車再次成為中大人校內通勤的首選，找回慢活的松林美景。</li>
         </ul>
     </article>
+   </div>
     <footer class="site-footer">
             <div class="footer-content">
                 <div class="footer-logo">
@@ -109,7 +146,6 @@
                 <p class="disclaimer" data-i18n="footer_disclaimer">*本網站為學生專案展示，非學校官方正式營運系統。</p>
             </div>
         </footer>
-</div>
 
     <nav class="side-nav">
         <div class="nav-item" onclick="enterMap()">
@@ -244,6 +280,6 @@
     </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
