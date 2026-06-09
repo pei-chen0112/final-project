@@ -1,28 +1,79 @@
  
         /* ==================== 1. 基礎與共用樣式 ==================== */
-        :root {
+        /* ==================== 1. 現代化設計系統變數 (隨主題切換) ==================== */
+/* ==================== 1. 現代化設計系統變數 (隨主題切換) ==================== */
+:root {
     --primary-green: #2e7d32;
     --dark-green: #1b5e20;
     --light-green: #e8f5e9;
     --accent-orange: #ff9800;
+    --border-radius: 12px;
+    
+    /* 亮色模式變數 (預設) */
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
     --text-main: #333333;
     --text-muted: #666666;
-    --bg-color: #f8f9fa;
-    --border-radius: 12px;
+    --border-color: #eaeaea;
+    --shadow-color: rgba(0, 0, 0, 0.04);
+    --footer-bg: #f4f5f7;
+}
+
+/* 深色模式變數 */
+body.dark-theme {
+    --bg-main: #121212;
+    --bg-card: rgba(30, 30, 30, 0.95);
+    --text-main: #f5f5f7;
+    --text-muted: #b0b0b2;
+    --border-color: #333333;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --footer-bg: #1a1a1c;
+    --primary-green: #4caf50; /* 暗態下稍微提亮綠色，增加辨識度 */
 }
 
 body { 
-    /* 加入系統字體，讓不同系統的渲染更現代 */
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "微軟正黑體", sans-serif; 
     margin: 0; 
     padding: 0; 
-    background: var(--bg-color); 
+    background-color: var(--bg-main); 
     color: var(--text-main);
     height: 100vh; 
     display: flex; 
     flex-direction: column; 
-    -webkit-font-smoothing: antialiased; /* 讓字體更平滑 */
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.4s ease, color 0.4s ease; /* 平滑切換動畫 */
 }
+
+/* 讓現有卡片與區塊自動套用主題變數 */
+.card, .story-section, .step-guide-container, .page-content, .top-navbar {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 10px 30px var(--shadow-color) !important;
+    transition: all 0.4s ease;
+}
+
+.story-title, .nav-links li { color: var(--primary-green); }
+.story-sub { color: var(--primary-green); border-bottom: 1px solid var(--border-color); }
+.goal-list { background-color: var(--bg-main); color: var(--text-main); }
+.input-group input { background-color: var(--bg-main); color: var(--text-main); border-color: var(--border-color); }
+.site-footer { background-color: var(--footer-bg); border-top: 1px solid var(--border-color); color: var(--text-muted); transition: background-color 0.4s ease; }
+.site-footer .footer-links a { color: var(--text-muted); }
+.site-footer .footer-links a:hover { color: var(--primary-green); }
+
+/* 主題切換按鈕專屬樣式 */
+.theme-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 38px; height: 38px; border-radius: 50%;
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    transition: all 0.3s ease;
+}
+.theme-btn:hover { transform: scale(1.1); }
+
         .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
         .active-view { display: flex; }
         .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
@@ -239,59 +290,63 @@ body {
     .story-title { font-size: 20px; }
 }
 
+/* ==================== 側邊導航按鈕 (大大大升級版) ==================== */
 .side-nav {
     position: fixed;
-    right: 20px;
+    right: 25px; 
     top: 50%;
-    transform: translateY(-50%); /* 垂直置中 */
+    transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px; /* 按鈕間距加大 */
     z-index: 999;
 }
 
-/* 個別按鈕樣式 */
 .nav-item {
-    background-color: white;
-    width: 50px; /* 稍微縮小，看起來更精緻 */
-    height: 50px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--primary-green);
+    width: 50px !important;  /* 從 50px 大幅升級到 76px */
+    height: 50px !important; /* 從 50px 大幅升級到 76px */
     border-radius: 50%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px var(--shadow-color);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    border: 1px solid #eaeaea; /* 拿掉粗糙的綠色外框，改用淺灰 */
-    color: var(--primary-green);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q彈展開動畫 */
+    overflow: hidden;
 }
 
 .nav-item:hover {
+    width: 150px !important; /* 展開更寬 */
+    border-radius: 38px; /* 保持完美膠囊圓角 */
     background-color: var(--primary-green);
     color: white;
-    transform: translateY(-3px); /* 懸停時稍微上浮 */
-    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.25);
+    transform: translateY(-4px) scale(1.02);
 }
 
 .nav-icon {
-    font-size: 24px;
+    font-size: 32px !important; /* 圖示明顯放大 */
+    transition: transform 0.3s ease;
 }
 
-/* 預設隱藏文字，滑鼠移上去才顯示 */
+.nav-item:hover .nav-icon {
+    display: none;
+}
+
 .nav-text {
-    font-size: 11px;
+    font-size: 15px !important; /* 文字放大，更易讀 */
     font-weight: bold;
     color: white;
     display: none;
     white-space: nowrap;
-}
-
-.nav-item:hover .nav-icon {
-    display: none; /* 展開時隱藏圖示 */
+    letter-spacing: 1px;
 }
 
 .nav-item:hover .nav-text {
-    display: block; /* 展開時顯示文字 */
+    display: block;
 }
 
 /* 中間內容區佔位 */

@@ -11,12 +11,15 @@
    
 </head>
 <body>
-    <div class="lang-switch">
+    <div class="top-utilities">
+        <button id="themeToggle" class="theme-btn" onclick="toggleTheme()">🌙</button>
+        <div class="lang-switch">
             <select onchange="changeLang(this.value)">
                 <option value="zh">🇹🇼 中文</option>
                 <option value="en">🇺🇸 English</option>
             </select>
         </div>
+    </div>
     <section id="loginSection" class="view-section auth-container" style="position: relative;">
         
 

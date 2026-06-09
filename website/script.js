@@ -697,6 +697,33 @@ guide_desc4: "Park in a safe area<br>and end your ride"
         changeLang('zh'); 
         renderUserMenu(); // <--- 確保網頁重新整理時也會跑一次
         // ==========================================
+// ==========================================
+// 🌗 深淺色模式切換邏輯 (Theme Switcher)
+// ==========================================
+function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle('dark-theme');
+    
+    const themeBtn = document.getElementById('themeToggle');
+    
+    if (body.classList.contains('dark-theme')) {
+        themeBtn.innerHTML = '☀️'; // 切換為亮色提示
+        localStorage.setItem('NCU_Bikes_Theme', 'dark');
+    } else {
+        themeBtn.innerHTML = '🌙'; // 切換為深色提示
+        localStorage.setItem('NCU_Bikes_Theme', 'light');
+    }
+}
+
+// 頁面載入時自動讀取使用者的偏好
+document.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem('NCU_Bikes_Theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) themeBtn.innerHTML = '☀️';
+    }
+});
 // 🔧 系統修正：將模組內的函式暴露給 HTML 使用
 // ==========================================
 window.switchView = switchView;
@@ -717,3 +744,4 @@ window.confirmRent = confirmRent;
 window.returnBike = returnBike;
 window.enterCarbonPage = enterCarbonPage;
 window.enterRepairPage = enterRepairPage;
+window.toggleTheme = toggleTheme;
