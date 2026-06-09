@@ -1,6 +1,28 @@
  
         /* ==================== 1. 基礎與共用樣式 ==================== */
-        body { font-family: "微軟正黑體", Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; height: 100vh; display: flex; flex-direction: column; }
+        :root {
+    --primary-green: #2e7d32;
+    --dark-green: #1b5e20;
+    --light-green: #e8f5e9;
+    --accent-orange: #ff9800;
+    --text-main: #333333;
+    --text-muted: #666666;
+    --bg-color: #f8f9fa;
+    --border-radius: 12px;
+}
+
+body { 
+    /* 加入系統字體，讓不同系統的渲染更現代 */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "微軟正黑體", sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    background: var(--bg-color); 
+    color: var(--text-main);
+    height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+    -webkit-font-smoothing: antialiased; /* 讓字體更平滑 */
+}
         .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow-y: auto; }
         .active-view { display: flex; }
         .btn { border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
@@ -131,17 +153,11 @@
 .story-section {
     width: 90%;
     max-width: 700px;
-    margin: 0 auto; /* 保持原本的水平置中邏輯 */
-    
-    /* 使用相對定位來微調位置 */
-    position: relative; 
-    left: 48px; /* 這裡的數值越大，文章就越往右移 */
-
-    /* 以下維持原有的美化樣式 */
-    padding: 20px;
+    margin: 0 auto; /* 完美的水平置中，不需要 left 偏移 */
+    padding: 40px; /* 增加呼吸空間 */
     background: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04); /* 更輕柔、擴散的現代陰影 */
     text-align: left;
     line-height: 1.8;
     color: #444;
@@ -237,24 +253,24 @@
 /* 個別按鈕樣式 */
 .nav-item {
     background-color: white;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%; /* 圓形按鈕 */
+    width: 50px; /* 稍微縮小，看起來更精緻 */
+    height: 50px;
+    border-radius: 50%;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid #2e7d32;
-    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #eaeaea; /* 拿掉粗糙的綠色外框，改用淺灰 */
+    color: var(--primary-green);
 }
 
 .nav-item:hover {
-    width: 120px; /* 懸停時展開顯示文字 */
-    border-radius: 30px;
-    background-color: #2e7d32;
+    background-color: var(--primary-green);
+    color: white;
+    transform: translateY(-3px); /* 懸停時稍微上浮 */
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.25);
 }
 
 .nav-icon {
@@ -320,4 +336,39 @@
 .nav-links li:hover {
     color: #1b5e20;
     text-decoration: underline;
+}
+.input-group input { 
+    width: 100%; 
+    padding: 12px 15px; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+    box-sizing: border-box; 
+    font-size: 16px; 
+    background-color: #fff; 
+    transition: all 0.2s ease; /* 平滑過渡 */
+}
+
+/* 點擊輸入框時的專業光暈效果 */
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+
+.btn { 
+    border: none; 
+    padding: 14px; /* 稍微加高按鈕，更有質感 */
+    width: 100%; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: 16px; 
+    font-weight: bold; 
+    margin-top: 10px; 
+    color: white; 
+    transition: transform 0.1s ease, background-color 0.2s ease; 
+}
+
+/* 按下按鈕時的微小內縮反饋 */
+.btn:active {
+    transform: scale(0.98);
 }
