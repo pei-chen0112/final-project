@@ -233,6 +233,19 @@
             <p style="font-size: 13px; color: #F44336; font-weight: bold; text-align: left;" data-i18n="repair_warn">⚠️ 報修後車輛將立刻從地圖隱藏，請牽至修理站維修。</p>
             <div class="input-group"><label data-i18n="rep_id_label">故障車牌號碼</label><input type="text" id="repairBikeId" data-i18n-ph="rep_id_ph" placeholder="例如: NCU-001"></div>
             <div class="input-group"><label data-i18n="rep_desc_label">損壞狀況描述</label><input type="text" id="repairDesc" data-i18n-ph="rep_desc_ph" placeholder="例如: 煞車失靈"></div>
+            <div class="input-group">
+    <label for="repairPhotos">損壞部位照片（可選多張）</label>
+    <input
+        type="file"
+        id="repairPhotos"
+        accept="image/*"
+        multiple
+        style="font-size: 13px; padding: 8px; cursor: pointer;"
+    >
+    <small style="display: block; color: gray; margin-top: 6px;">
+        請提供車輛全景與損壞部位近照，供維修及 AI 判讀使用。
+    </small>
+</div>
             <button class="btn btn-orange" onclick="submitRepair()" data-i18n="repair_btn">通報損壞腳踏車</button>
         </div>
     </section>
