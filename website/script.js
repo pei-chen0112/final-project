@@ -440,27 +440,125 @@ guide_desc4: "Park in a safe area<br>and end your ride"
             switchView('mainMenuSection');
         }
 
-        function submitRepair() {
-            let bikeId = document.getElementById('repairBikeId').value;
-            let desc = document.getElementById('repairDesc').value;
-            if(!bikeId || !desc) return alert(t('err_empty'));
-            if (serverBikeDatabase[bikeId]) {
-                serverBikeDatabase[bikeId].status = "maintenance";
-                if (bikeMarkers[bikeId]) { map.removeLayer(bikeMarkers[bikeId]); delete bikeMarkers[bikeId]; }
+        async function submitRepair() {
+    const bikeId = document.getElementById("repairBikeId").value.trim();
+    const desc = document.getElementById("repairDesc").value.trim();
+    const photoInput = document.getElementById("repairPhotos");
+    const files = Array.from(photoInput.files);
+
+    if (!bikeId || !desc) {
+        return alert(t("err_empty"));
+    }
+
+    if (files.length === 0) {
+        return alert("請至少選擇一張損壞部位照片！");
+    }
+
+    if (files.length > 3) {
+        return alert("最多選擇 3 張照片！");
+    }
+
+    for (const file of files) {
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            return alert("請使用 JPG、PNG 或 WebP 圖片！");
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            return alert("每張照片請勿超過 5 MB！");
+        }
+    }
+
+    const button = document.querySelector(
+        '#repairSection button[onclick="submitRepair()"]'
+    );
+    if (button?.disabled) return;
+    if (button) button.disabled = true;
+
+    try {
+        // 讀取照片，暫存在本頁記憶體；此處尚未上傳雲端。
+        const photos = await Promise.all(files.map(file =>
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("照片讀取失敗"));
+                reader.onabort = () => reject(new Error("照片讀取中止"));
+                reader.readAsDataURL(file);
+            })
+        ));
+
+        repairQueue.push({
+            bikeId,
+            desc,
+            photos,
+            time: new Date().toLocaleString()
+        });
+
+        if (serverBikeDatabase[bikeId]) {
+            serverBikeDatabase[bikeId].status = "maintenance";
+            if (bikeMarkers[bikeId]) {
+                map.removeLayer(bikeMarkers[bikeId]);
+                delete bikeMarkers[bikeId];
             }
-            repairQueue.push({ bikeId: bikeId, desc: desc, time: new Date().toLocaleTimeString() });
-            alert(t('alt_rep_ok')); switchView('mainMenuSection');
         }
 
-        function renderAdminDashboard() {
-            let repairHtml = "";
-            if (repairQueue.length === 0) repairHtml = `<tr><td colspan='3' style='text-align:center; color:gray;'>${t('empty_rep')}</td></tr>`;
-            repairQueue.forEach((item, i) => {
-                repairHtml += `<tr><td style="color:#F44336; font-weight:bold;">${item.bikeId}</td><td>${item.desc}</td>
-                <td><button class="action-btn btn-approve" onclick="resolveRepair(${i}, '${item.bikeId}')">${t('btn_fix')}</button></td></tr>`;
-            });
-            document.getElementById('adminRepairTable').innerHTML = repairHtml;
+        document.getElementById("repairBikeId").value = "";
+        document.getElementById("repairDesc").value = "";
+        photoInput.value = "";
 
+        alert("報修資料與照片已暫存於本頁，重新整理後會清除。");
+        switchView("mainMenuSection");
+    } catch (error) {
+        console.error(error);
+        alert("照片讀取失敗，請重新選取後再試。");
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+
+        function renderAdminDashboard() {
+            const repairTable = document.getElementById("adminRepairTable");
+repairTable.replaceChildren();
+
+if (repairQueue.length === 0) {
+    const row = repairTable.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 3;
+    cell.style.cssText = "text-align:center; color:gray;";
+    cell.textContent = t("empty_rep");
+}
+
+repairQueue.forEach((item, i) => {
+    const row = repairTable.insertRow();
+
+    const idCell = row.insertCell();
+    idCell.textContent = item.bikeId;
+    idCell.style.cssText = "color:#F44336; font-weight:bold;";
+
+    const descCell = row.insertCell();
+    const description = document.createElement("div");
+    description.textContent = item.desc;
+    descCell.appendChild(description);
+
+    // 將照片顯示在「損壞描述」下方。
+    (item.photos || []).forEach((src, index) => {
+        const photo = document.createElement("img");
+        photo.src = src;
+        photo.alt = `報修照片 ${index + 1}`;
+        photo.style.cssText =
+            "display:block; width:180px; max-width:100%;" +
+            "height:auto; margin-top:8px; border-radius:8px;";
+        descCell.appendChild(photo);
+    });
+
+    const actionCell = row.insertCell();
+    const fixButton = document.createElement("button");
+    fixButton.className = "action-btn btn-approve";
+    fixButton.textContent = t("btn_fix");
+    fixButton.addEventListener("click", () => {
+        resolveRepair(i, item.bikeId);
+    });
+    actionCell.appendChild(fixButton);
+});
             let pendingApps = applicationHistory.filter(app => app.status === 'pending');
             let approvalHtml = "";
             if (pendingApps.length === 0) approvalHtml = `<tr><td colspan='3' style='text-align:center; color:gray;'>${t('empty_appr')}</td></tr>`;
