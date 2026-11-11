@@ -1,0 +1,9 @@
+{
+  "name": "ncu-bike-inspector",
+  "private": true,
+  "description": "AI bicycle condition check for NCU Green Bikes (Cloudflare Worker + Claude)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}

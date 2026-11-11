@@ -1,0 +1,6 @@
+# 訓練照片體積很大（數百 MB），不要上傳到 GitHub；sources.csv 與 labels.csv 會保留
+raw/
+labeled/
+test/
+__pycache__/
+labels.backup-*.csv

@@ -1,0 +1,15 @@
+name = "ncu-bike-inspector"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# 合格門檻（0–100 分）：車況分數達到這個分數才算合格
+PASS_SCORE = "70"
+# 允許呼叫這個服務的網站（逗號分隔）。部署網站後，把正式網址加進來。
+ALLOWED_ORIGINS = "http://localhost:5500,http://127.0.0.1:5500,http://127.0.0.1:5510"
+# Firebase 網頁設定裡的 apiKey（本來就公開在網站程式中），用來確認呼叫者已登入
+FIREBASE_API_KEY = "AIzaSyCt6qx2QVbf2APa6pH3aazf5m07Ru6R11I"
+
+# ANTHROPIC_API_KEY 是機密，不要寫在這裡！請執行：
+#   npx wrangler secret put ANTHROPIC_API_KEY
