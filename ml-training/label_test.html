@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>測試集盲測標註</title>
+<style>
+  :root { --bg:#f6f7f5; --card:#fff; --ink:#1d2a1f; --muted:#667066; --line:#dfe3dc; --accent:#2e7d32; --warn:#b26a00; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141714; --card:#1d211d; --ink:#e7ece6; --muted:#9aa39a; --line:#323832; --accent:#66bb6a; --warn:#ffb74d; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:2; }
+  header h1 { font-size:17px; margin:0 8px 0 0; }
+  input[type=text], textarea { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+  button { font:inherit; padding:7px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .muted { color:var(--muted); font-size:13px; }
+  main { display:grid; grid-template-columns: minmax(0,1fr) 360px; gap:16px; padding:16px; max-width:1400px; margin:auto; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .photo { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px; display:flex; flex-direction:column; align-items:center; }
+  .photo img { max-width:100%; max-height:72vh; object-fit:contain; border-radius:8px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:14px; }
+  .grades { display:grid; gap:6px; }
+  .grades button { text-align:left; display:flex; gap:10px; align-items:flex-start; padding:8px 10px; }
+  .grades button b { font-size:18px; min-width:20px; }
+  .grades button.on { outline:3px solid var(--accent); }
+  .grades small { color:var(--muted); display:block; font-size:12px; }
+  .parts { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:14px; }
+  .nav { display:flex; gap:8px; flex-wrap:wrap; }
+  progress { width:160px; }
+  .strip { display:flex; flex-wrap:wrap; gap:3px; padding:0 16px 16px; max-width:1400px; margin:auto; }
+  .strip span { width:22px; height:14px; border-radius:3px; background:var(--line); cursor:pointer; font-size:0; }
+  .strip span.done { background:var(--accent); }
+  .strip span.cur { outline:2px solid var(--warn); }
+  .note { font-size:13px; padding:8px 10px; border-radius:8px; background:var(--bg); border:1px dashed var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚲 測試集盲測標註</h1>
+  <label>標註者代號 <input type="text" id="who" size="8" placeholder="例如 M1"></label>
+  <progress id="prog" value="0" max="1"></progress><span class="muted" id="progText"></span>
+  <span style="flex:1"></span>
+  <button id="nextTodo">跳到未標註</button>
+  <button class="primary" id="export">匯出 CSV</button>
+</header>
+<main>
+  <section class="photo">
+    <div class="muted" id="pid"></div>
+    <img id="img" alt="測試照片">
+  </section>
+  <aside class="panel">
+    <div class="note">只依照片中<b>看得到</b>的部分判斷。標註完成前請勿查看模型結果或 test/_sealed/ 資料夾。快捷鍵：1–5 選等級，← → 換張。</div>
+    <div>
+      <div style="margin-bottom:6px"><b>等級</b></div>
+      <div class="grades" id="grades"></div>
+    </div>
+    <div>
+      <div style="margin-bottom:6px"><b>照片中可見部位</b></div>
+      <div class="parts" id="parts"></div>
+    </div>
+    <label><b>看到的損傷</b><br><textarea id="damage" rows="2" style="width:100%" placeholder="例如：後輪輪框彎曲、鏈條生鏽"></textarea></label>
+    <label><b>無法確認的項目</b><br><textarea id="unsure" rows="2" style="width:100%" placeholder="例如：胎壓、煞車是否有效"></textarea></label>
+    <div class="nav">
+      <button id="prev">← 上一張</button>
+      <button id="next">下一張 →</button>
+    </div>
+  </aside>
+</main>
+<div class="strip" id="strip"></div>
+
+<script src="test/images.js"></script>
+<script>
+const GRADES = [
+  ["A", "良好", "接近全新，只有輕微使用痕跡"],
+  ["B", "輕微磨損", "一般刮痕、表面輕微生鏽、輪胎或座墊小幅磨損"],
+  ["C", "中度磨損", "明顯老舊，至少一個零件需要更換（輪胎磨平、鏈條生鏽、線材脫皮、座墊破損）"],
+  ["D", "嚴重損壞", "車架裂開／彎曲／斷裂、輪組嚴重變形、大面積鏽蝕、主要零件斷裂或缺失"],
+  ["X", "不適用或無法判讀", "看不到腳踏車或零件、電動車或兒童車、圖畫或廣告、未裝在車上的散件、太模糊／太暗／太遠"],
+];
+const PARTS = ["整車", "車架", "輪組／輪胎", "煞車", "鏈條／傳動", "把手／座墊", "其他"];
+const ids = window.TEST_IDS || [];
+const $ = (id) => document.getElementById(id);
+const KEY = "ncu-bike-testlabels";
+let data = {}, who = "", cur = 0;
+
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "{}"); who = s.who || ""; data = s.data || {}; } catch { data = {}; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ who, data })); } catch {}
+}
+
+$("grades").innerHTML = GRADES.map(([g, n, d], i) =>
+  `<button data-g="${g}"><b>${g}</b><span>${n}（${i + 1}）<small>${d}</small></span></button>`).join("");
+$("parts").innerHTML = PARTS.map(p => `<label><input type="checkbox" value="${p}"> ${p}</label>`).join("");
+
+function rec() { return data[ids[cur]] || (data[ids[cur]] = { grade: "", parts: [], damage: "", unsure: "" }); }
+
+function show() {
+  const id = ids[cur], r = data[id] || {};
+  $("img").src = `test/images/${id}.jpg`;
+  $("pid").textContent = `${id}（${cur + 1} / ${ids.length}）`;
+  document.querySelectorAll("#grades button").forEach(b => b.classList.toggle("on", b.dataset.g === r.grade));
+  document.querySelectorAll("#parts input").forEach(c => { c.checked = (r.parts || []).includes(c.value); });
+  $("damage").value = r.damage || ""; $("unsure").value = r.unsure || "";
+  const done = ids.filter(i => data[i]?.grade).length;
+  $("prog").max = ids.length; $("prog").value = done; $("progText").textContent = `已標 ${done} / ${ids.length}`;
+  $("strip").innerHTML = ids.map((i, k) => `<span class="${data[i]?.grade ? "done" : ""} ${k === cur ? "cur" : ""}" data-k="${k}" title="${i}">${i}</span>`).join("");
+}
+function go(k) { cur = Math.max(0, Math.min(ids.length - 1, k)); show(); }
+function setGrade(g) { rec().grade = g; save(); show(); }
+
+$("grades").onclick = (e) => { const b = e.target.closest("button"); if (b) setGrade(b.dataset.g); };
+$("parts").onchange = () => { rec().parts = [...document.querySelectorAll("#parts input:checked")].map(c => c.value); save(); };
+$("damage").oninput = () => { rec().damage = $("damage").value; save(); };
+$("unsure").oninput = () => { rec().unsure = $("unsure").value; save(); };
+$("who").oninput = () => { who = $("who").value.trim(); save(); };
+$("prev").onclick = () => go(cur - 1);
+$("next").onclick = () => go(cur + 1);
+$("strip").onclick = (e) => { const s = e.target.closest("span"); if (s) go(+s.dataset.k); };
+$("nextTodo").onclick = () => { const k = ids.findIndex(i => !data[i]?.grade); go(k < 0 ? cur : k); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.key >= "1" && e.key <= "5") setGrade(GRADES[+e.key - 1][0]);
+  else if (e.key === "ArrowRight") go(cur + 1);
+  else if (e.key === "ArrowLeft") go(cur - 1);
+});
+
+const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+$("export").onclick = () => {
+  if (!who) { alert("請先填寫標註者代號"); $("who").focus(); return; }
+  const missing = ids.filter(i => !data[i]?.grade);
+  if (missing.length && !confirm(`還有 ${missing.length} 張沒標等級，仍要匯出嗎？`)) return;
+  const rows = [["test_id", "labeler", "grade", "parts", "damage", "unsure"]]
+    .concat(ids.map(i => [i, who, data[i]?.grade || "", (data[i]?.parts || []).join("、"), data[i]?.damage || "", data[i]?.unsure || ""]));
+  const blob = new Blob(["﻿" + rows.map(r => r.map(csvCell).join(",")).join("\r\n")], { type: "text/csv" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `labels_${who}.csv` });
+  a.click();
+};
+
+load();
+$("who").value = who;
+if (!ids.length) document.body.innerHTML = "<p style='padding:20px'>找不到 test/images.js，請先執行 python make_test_set.py</p>";
+else { const k = ids.findIndex(i => !data[i]?.grade); go(k < 0 ? 0 : k); }
+</script>
+</body>
+</html>
