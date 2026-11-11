@@ -50,9 +50,6 @@ const CARBON_PER_SEC = CARBON_PER_KM * AVG_SPEED_KMH / 3600; // ≈ 1.04 克 / �
 const TREE_GRAMS_PER_DAY = 60;                 // 一棵樹一天約吸收 60 克 CO₂ (約 22 公斤 / 年)
 const CAMPUS = [24.96815, 121.19242];          // 中央大學
 const CAMPUS_RADIUS_M = 1200;                  // 還車校園範圍
-const MQTT_URL = "wss://broker.emqx.io:8084/mqtt";
-const MQTT_TOPIC = "ncu/greenbike/demo/haoen"; // 手機 GPS 即時定位頻道
-const LIVE_BIKE_ID = "NCU-001";                // MQTT 定位綁定的車輛
 const PROMO_CODES = { "SDGS-2024": 50, "PROFESSOR-100": 100 };
 // 🤖 AI 車況檢測服務網址（部署 ai-inspector 後填入，例如 "https://ncu-bike-inspector.xxx.workers.dev"）
 // 留空代表不使用 AI，申請會直接送給技師人工審核
@@ -85,7 +82,6 @@ const state = {
     rides: [],
     bikes: {},
     bikesLoaded: false,
-    liveBike: null,      // MQTT 即時座標
     admin: { apps: [], repairs: [], feedback: [] }
 };
 const unsubs = { user: [], admin: [] };
@@ -727,9 +723,9 @@ function openInfo(key) {
 }
 
 // ==========================================
-// 🗺️ 12. 地圖、MQTT 即時定位
+// 🗺️ 12. 地圖
 // ==========================================
-let map = null, mqttClient = null, meMarker = null;
+let map = null, meMarker = null;
 const bikeMarkers = {};
 
 function initMap() {
@@ -741,23 +737,16 @@ function initMap() {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
     renderMarkers();
-    connectMqtt();
 }
 
-function bikeIcon(live) {
+function bikeIcon() {
     return L.divIcon({
-        className: "bike-pin" + (live ? " live" : ""),
+        className: "bike-pin",
         html: '<div class="pin"><span>🚲</span></div>',
         iconSize: [42, 42],
         iconAnchor: [21, 50],
         tooltipAnchor: [0, -48]
     });
-}
-
-function bikePosition(id) {
-    if (id === LIVE_BIKE_ID && state.liveBike) return [state.liveBike.lat, state.liveBike.lng];
-    const b = state.bikes[id];
-    return [b.lat, b.lng];
 }
 
 function renderMarkers() {
@@ -767,18 +756,15 @@ function renderMarkers() {
         if (!visible.includes(id)) { map.removeLayer(bikeMarkers[id]); delete bikeMarkers[id]; }
     });
     visible.forEach(id => {
-        const pos = bikePosition(id);
-        const live = id === LIVE_BIKE_ID && !!state.liveBike;
+        const pos = [state.bikes[id].lat, state.bikes[id].lng];
         let m = bikeMarkers[id];
         if (!m) {
-            m = L.marker(pos, { icon: bikeIcon(live), riseOnHover: true }).addTo(map);
+            m = L.marker(pos, { icon: bikeIcon(), riseOnHover: true }).addTo(map);
             m.bindTooltip(id, { direction: "top" });
             m.on("click", () => openRentPanel(id));
-            m._isLive = live;
             bikeMarkers[id] = m;
         } else {
             m.setLatLng(pos);
-            if (m._isLive !== live) { m.setIcon(bikeIcon(live)); m._isLive = live; }
         }
     });
 }
@@ -786,39 +772,6 @@ function renderMarkers() {
 function updateMapChips() {
     const n = Object.values(state.bikes).filter(b => b.status === "active").length;
     $("mapAvailable").textContent = state.bikesLoaded ? t("map_available", { n }) : t("loading");
-    const liveChip = $("liveChip");
-    const showLive = !!state.liveBike && state.bikes[LIVE_BIKE_ID]?.status === "active";
-    liveChip.hidden = !showLive;
-    if (showLive) liveChip.textContent = t("map_live", { id: LIVE_BIKE_ID });
-}
-
-function connectMqtt() {
-    if (mqttClient || typeof mqtt === "undefined") return;
-    try {
-        mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000, connectTimeout: 10000 });
-        mqttClient.on("connect", () => {
-            console.log("✅ 廣播中心連線成功！正在監聽同學的手機訊號...");
-            mqttClient.subscribe(MQTT_TOPIC);
-        });
-        mqttClient.on("message", (topic, message) => {
-            let data;
-            try { data = JSON.parse(message.toString()); } catch (e) { return; }
-            const lat = Number(data.lat), lng = Number(data.lng);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-            const first = !state.liveBike;
-            state.liveBike = { lat, lng, at: Date.now() };
-            renderMarkers();
-            updateMapChips();
-            if (first && state.bikes[LIVE_BIKE_ID]?.status === "active") toast(t("map_live", { id: LIVE_BIKE_ID }));
-        });
-        mqttClient.on("error", (e) => console.warn("MQTT 錯誤：", e));
-    } catch (e) {
-        console.warn("MQTT 無法連線：", e);
-    }
-}
-
-function focusLiveBike() {
-    if (map && state.liveBike) map.setView([state.liveBike.lat, state.liveBike.lng], 18);
 }
 
 function getPosition(timeout = 8000) {
@@ -1951,7 +1904,7 @@ Object.assign(window, {
     enterMap, enterMemberPage, enterRepairPage, enterCarbonPage,
     openLinePayMock, redeemPromoCode, changePassword,
     previewPhoto, confirmBikeUpload, submitRepair, previewRepairPhotos,
-    confirmRent, closeRentPanel, returnBike, locateMe, focusLiveBike, loginToRent
+    confirmRent, closeRentPanel, returnBike, locateMe, loginToRent
 });
 
 // AI 客服 (Botpress) 的泡泡在 Shadow DOM 裡，外部 CSS 改不到，所以用程式注入樣式：

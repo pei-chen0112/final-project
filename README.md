@@ -25,7 +25,6 @@ python -m http.server 5500
 - 技師後台帳號：`admin` / `admin123`（展示用，只在前端比對）
 - 測試序號：`SDGS-2024`（$50）、`PROFESSOR-100`（$100），每個帳號各可兌換一次
 - 車機密碼每分鐘更新，解鎖視窗中有「模擬車機螢幕」顯示目前密碼
-- 地圖上的 `NCU-001` 會接收 MQTT 頻道 `ncu/greenbike/demo/haoen` 的手機 GPS 即時定位
 
 ## 🗺️ 車輛線稿與部位照片
 
