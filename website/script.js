@@ -12,6 +12,9 @@ import {
     onSnapshot, runTransaction, writeBatch, increment, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { translations } from "./i18n.js";
+import {
+    AI_INSPECT_URL, GRADES, compressImage, compressForUpload, runAiInspection, runLocalModel, combineResults
+} from "./inspection.js";
 
 // 你的專屬 Firebase 設定檔
 const firebaseConfig = {
@@ -55,19 +58,6 @@ const TREE_GRAMS_PER_DAY = 60;                 // 一棵樹一天約吸收 60 �
 const CAMPUS = [24.96815, 121.19242];          // 中央大學
 const CAMPUS_RADIUS_M = 1200;                  // 還車校園範圍
 const PROMO_CODES = { "SDGS-2024": 50, "PROFESSOR-100": 100 };
-// 🤖 AI 車況檢測服務網址（部署 ai-inspector 後填入，例如 "https://ncu-bike-inspector.xxx.workers.dev"）
-// 留空代表不使用 AI，申請會直接送給技師人工審核
-const AI_INSPECT_URL = "";
-// 🧠 自建模型（Teachable Machine 匯出的 model.json / metadata.json / weights.bin 放在這個資料夾）
-// 資料夾裡沒有模型時會自動略過，只使用 Claude
-const LOCAL_MODEL_URL = "model/";
-const TFJS_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js";
-const TM_IMAGE_URL = "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js";
-const GRADES = ["A", "B", "C", "D", "X"];               // 模型的類別名稱必須是這 5 個
-const GRADE_SCORE = { A: 95, B: 80, C: 60, D: 30 };     // 各等級的代表分數
-const PASS_SCORE = 70;                                   // 必須和 ai-inspector/wrangler.toml 的 PASS_SCORE 一致
-const LOCAL_MIN_CONFIDENCE = 0.6;                        // 自建模型信心低於這個值就不採用
-const CLAUDE_WEIGHT = 0.6;                               // 最終分數 = Claude × 60% + 自建模型 × 40%
 const DEFAULT_BIKES = {
     "NCU-001": { lat: 24.96815, lng: 121.19242 },
     "NCU-002": { lat: 24.96750, lng: 121.19450 }
@@ -152,6 +142,7 @@ function maskId(id) {
 
 function errMsg(e) {
     if (e instanceof AppError) return t(e.key);
+    if (e?.i18nKey) return t(e.i18nKey); // inspection.js 的錯誤
     if (e?.code === "unavailable" || e?.code === "auth/network-request-failed") return t("err_network");
     console.error(e);
     return t("err_generic", { msg: e?.message || e });
@@ -1298,25 +1289,6 @@ function previewPhoto(input) {
     preview.classList.add("has-image");
 }
 
-// 壓縮成 JPEG data URL，存進 Firestore（單一文件上限 1MB）
-function compressImage(file, maxSide, quality) {
-    return new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = () => {
-            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(url);
-            resolve(canvas.toDataURL("image/jpeg", quality));
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new AppError("err_img")); };
-        img.src = url;
-    });
-}
-
 async function confirmBikeUpload() {
     const inputs = [...document.querySelectorAll("#photoSlots input[type=file]")];
     const chosen = inputs.filter(inp => inp.files[0]).map(inp => ({ key: inp.dataset.part, file: inp.files[0] }));
@@ -1330,12 +1302,7 @@ async function confirmBikeUpload() {
     await withBusy($("uploadBtn"), async () => {
         try {
             // 7–8 張照片要一起存進同一筆資料（Firestore 上限 1MB），太大就再壓小一點
-            const MAX_TOTAL = 900000;
-            for (const [side, q] of [[640, 0.7], [512, 0.62], [400, 0.55]]) {
-                photos = await Promise.all(files.map(f => compressImage(f, side, q)));
-                if (photos.join("").length <= MAX_TOTAL) break;
-            }
-            if (photos.join("").length > MAX_TOTAL) throw new AppError("err_too_big");
+            photos = await compressForUpload(files);
         } catch (e) {
             photos = null;
             return toast(errMsg(e), "error");
@@ -1345,7 +1312,7 @@ async function confirmBikeUpload() {
         if (useClaude) toast(t("ai_checking"), "info", 6000);
         const [localRes, claudeRes] = await Promise.allSettled([
             runLocalModel(photos),
-            useClaude ? runAiInspection(photos, parts) : Promise.resolve(null)
+            useClaude ? runAiInspection(photos, parts, await auth.currentUser.getIdToken()) : Promise.resolve(null)
         ]);
         const local = localRes.status === "fulfilled" ? localRes.value : null;
         const claude = claudeRes.status === "fulfilled" ? claudeRes.value : null;
@@ -1395,25 +1362,6 @@ async function confirmBikeUpload() {
 // ==========================================
 // 🤖 AI 車況檢測
 // ==========================================
-async function runAiInspection(photos, parts) {
-    const token = await auth.currentUser.getIdToken();
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 120000);
-    try {
-        const res = await fetch(AI_INSPECT_URL.replace(/\/+$/, "") + "/assess", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ photos, parts }),
-            signal: ctrl.signal
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        return data;
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
 const aiVerdict = (ai) => (["pass", "fail", "review"].includes(ai?.verdict) ? ai.verdict : "review");
 const clampScore = (n) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
 const CONDITIONS = ["good", "minor_wear", "moderate_wear", "severe", "not_visible"];
@@ -1459,112 +1407,6 @@ function openAiReport(ai) {
 // ==========================================
 // 🧠 自建模型（Teachable Machine）+ 與 Claude 合併判斷
 // ==========================================
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = () => reject(new Error("無法載入 " + src));
-        document.head.appendChild(s);
-    });
-}
-
-// 第一次需要時才載入（TensorFlow.js 約 1MB，不拖慢其他頁面）；沒有模型檔時回傳 null
-let localModelPromise = null;
-function loadLocalModel() {
-    if (!localModelPromise) {
-        localModelPromise = (async () => {
-            if (!LOCAL_MODEL_URL) return null;
-            const head = await fetch(LOCAL_MODEL_URL + "model.json", { method: "HEAD", cache: "no-cache" }).catch(() => null);
-            if (!head || !head.ok) return null; // 還沒放入模型
-            await loadScript(TFJS_URL);
-            await loadScript(TM_IMAGE_URL);
-            const model = await window.tmImage.load(LOCAL_MODEL_URL + "model.json", LOCAL_MODEL_URL + "metadata.json");
-            const labels = model.getClassLabels();
-            if (!["A", "B", "C", "D"].every(g => labels.includes(g))) {
-                throw new Error(`模型類別必須是 A、B、C、D、X，目前是：${labels.join(", ")}`);
-            }
-            return model;
-        })().catch(e => { localModelPromise = null; throw e; });
-    }
-    return localModelPromise;
-}
-
-function dataUrlToImage(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = url;
-    });
-}
-
-// 回傳 null 代表沒有自建模型
-async function runLocalModel(photos) {
-    const model = await loadLocalModel();
-    if (!model) return null;
-    const perPhoto = [];
-    for (const p of photos) {
-        const preds = await model.predict(await dataUrlToImage(p)); // [{ className, probability }, ...]
-        perPhoto.push(Object.fromEntries(preds.map(x => [x.className, x.probability])));
-    }
-    // 3 張照片的機率取平均
-    const probs = {};
-    GRADES.forEach(g => { probs[g] = perPhoto.reduce((s, p) => s + (p[g] || 0), 0) / perPhoto.length; });
-    const topClass = GRADES.reduce((a, b) => (probs[a] >= probs[b] ? a : b));
-    // 只用 A~D 計算分數（扣掉 X 的機率後重新分配）
-    const bikeProb = 1 - probs.X;
-    const score = bikeProb > 0.001
-        ? Math.round(["A", "B", "C", "D"].reduce((s, g) => s + probs[g] * GRADE_SCORE[g], 0) / bikeProb)
-        : 0;
-    return { probs, topClass, confidence: probs[topClass], notBike: topClass === "X", score, wearRate: 100 - score };
-}
-
-// Claude 發現的硬性問題（自建模型沒學過的少見狀況），Claude 有否決權
-function isHardFail(c) {
-    return c.verdict === "fail" && (
-        c.bikeType !== "standard" ||
-        c.components?.frame?.condition === "severe" ||
-        c.components?.wheels_tires?.condition === "severe");
-}
-
-// 合併規則：由上往下檢查，符合第一條就停止。回傳 null 代表兩邊都沒有結果
-function combineResults(local, claude) {
-    if (!local && !claude) return null;
-    if (!local) return claude; // 沒有自建模型：與原本只用 Claude 的結果相同
-
-    const localOk = !local.notBike && local.confidence >= LOCAL_MIN_CONFIDENCE;
-    const localPass = localOk && local.score >= PASS_SCORE;
-
-    let score = null;
-    if (claude && localOk) score = Math.round(claude.score * CLAUDE_WEIGHT + local.score * (1 - CLAUDE_WEIGHT));
-    else if (claude) score = claude.score;
-    else if (localOk) score = local.score;
-
-    let verdict, reasonKey;
-    if (claude && isHardFail(claude)) {
-        verdict = "fail"; reasonKey = "hy_hard_fail";
-    } else if (local.notBike && local.confidence >= 0.7) {
-        verdict = "review"; reasonKey = "hy_local_notbike";
-    } else if (claude && claude.verdict === "review") {
-        verdict = "review"; reasonKey = "hy_claude_review";
-    } else if (claude && localOk) {
-        const claudePass = claude.verdict === "pass";
-        if (claudePass === localPass) { verdict = claudePass ? "pass" : "fail"; reasonKey = "hy_agree"; }
-        else { verdict = "review"; reasonKey = "hy_disagree"; }
-    } else if (claude) {
-        verdict = claude.verdict; reasonKey = "hy_claude_only";
-    } else if (localOk) {
-        verdict = (!localPass && local.confidence >= 0.85) ? "fail" : "review"; reasonKey = "hy_local_only";
-    } else {
-        verdict = "review"; reasonKey = "hy_none";
-    }
-    return {
-        hybrid: true, verdict, score, wearRate: score === null ? null : 100 - score,
-        passScore: PASS_SCORE, reasonKey, local, claude, assessedAt: Date.now()
-    };
-}
 
 const gradeName = (g) => (GRADES.includes(g) ? t("grade_" + g) : "-");
 const pct = (n) => Math.round(Math.max(0, Math.min(1, Number(n) || 0)) * 100);

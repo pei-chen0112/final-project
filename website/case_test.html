@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回收申請案件測試</title>
+<style>
+  :root { --bg:#f6f7f5; --card:#fff; --ink:#1d2a1f; --muted:#667066; --line:#dfe3dc; --accent:#2e7d32; --bad:#c62828; --warn:#b26a00; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141714; --card:#1d211d; --ink:#e7ece6; --muted:#9aa39a; --line:#323832; --accent:#66bb6a; --bad:#ef5350; --warn:#ffb74d; } }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:16px; font-family: system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:1100px; margin:auto; display:flex; flex-direction:column; gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  h1 { font-size:20px; margin:0; }
+  button { font:inherit; padding:8px 16px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  .muted { color:var(--muted); font-size:13px; }
+  code { background:var(--bg); padding:1px 5px; border-radius:4px; }
+  .table-wrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; white-space:nowrap; }
+  .pass { color:var(--accent); font-weight:600; } .fail { color:var(--bad); font-weight:600; } .review { color:var(--warn); font-weight:600; } .err { color:var(--bad); }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>🧪 回收申請案件測試</h1>
+    <p class="muted">用網站同一套程式（inspection.js）逐件執行自建模型與 Claude，記錄三種模式的判定。
+      每一件都會呼叫一次 Claude，會使用 API 額度。</p>
+    <p id="who" class="muted">檢查登入狀態中…</p>
+  </div>
+
+  <div class="card">
+    <b>1. 選擇案件資料夾</b>
+    <p class="muted">資料夾內每台車一個子資料夾（例如 <code>C01/</code>），照片檔名用部位代號：
+      <code>whole_side</code>、<code>whole_front</code>、<code>frame</code>、<code>wheels</code>、<code>brakes</code>、<code>chain</code>、<code>cockpit</code>，
+      其他損壞處用 <code>extra</code> 開頭（如 <code>extra1.jpg</code>）。</p>
+    <div class="row"><input type="file" id="folder" webkitdirectory multiple> <span id="found" class="muted"></span></div>
+  </div>
+
+  <div class="card">
+    <b>2. 執行</b>
+    <div class="row" style="margin-top:8px">
+      <button class="primary" id="run" disabled>開始測試</button>
+      <button id="export" disabled>匯出結果（CSV + JSON）</button>
+      <span id="status" class="muted"></span>
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>案件</th><th>照片</th><th>自建模型</th><th>Claude</th><th>混合判定</th><th>備註</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { AI_INSPECT_URL, PASS_SCORE, compressForUpload, runLocalModel, runAiInspection, combineResults } from "./inspection.js";
+
+const auth = getAuth(initializeApp({
+  apiKey: "AIzaSyCt6qx2QVbf2APa6pH3aazf5m07Ru6R11I",
+  authDomain: "ncubike-ad257.firebaseapp.com",
+  projectId: "ncubike-ad257",
+  appId: "1:565716105592:web:f16a2a4bc336d3e20e308d",
+}));
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const PART_KEYS = ["whole_side", "whole_front", "frame", "wheels", "brakes", "chain", "cockpit"];
+const REQUIRED = PART_KEYS;
+const VERDICT_ZH = { pass: "合格", review: "待確認", fail: "不合格" };
+let cases = [], results = [], user = null;
+
+onAuthStateChanged(auth, (u) => {
+  user = u && u.emailVerified && u.email?.endsWith("@g.ncu.edu.tw") ? u : null;
+  $("who").innerHTML = user
+    ? `已登入：${esc(user.email)}`
+    : `尚未登入已驗證的 @g.ncu.edu.tw 帳號，Claude 會無法使用。請先到 <a href="Eng.html">網站</a> 登入後再回來重新整理。`;
+  refresh();
+});
+
+function partOf(name) {
+  const stem = name.replace(/\.[^.]+$/, "").toLowerCase();
+  if (PART_KEYS.includes(stem)) return stem;
+  if (stem.startsWith("extra")) return "extra";
+  return null;
+}
+
+$("folder").onchange = (e) => {
+  const byCase = {};
+  for (const f of e.target.files) {
+    if (!/\.(jpe?g|png|webp)$/i.test(f.name)) continue;
+    const segs = f.webkitRelativePath.split("/");
+    if (segs.length < 3) continue; // 根資料夾/案件/照片
+    const id = segs[segs.length - 2];
+    (byCase[id] ||= []).push(f);
+  }
+  cases = Object.keys(byCase).sort().map(id => {
+    const files = byCase[id].map(f => ({ f, part: partOf(f.name) })).filter(x => x.part)
+      .sort((a, b) => (PART_KEYS.indexOf(a.part) + 1 || 99) - (PART_KEYS.indexOf(b.part) + 1 || 99));
+    const missing = REQUIRED.filter(p => !files.some(x => x.part === p));
+    return { id, files, missing };
+  });
+  results = [];
+  $("found").textContent = `找到 ${cases.length} 件`;
+  render();
+  refresh();
+};
+
+function refresh() { $("run").disabled = !cases.length; $("export").disabled = !results.length; }
+
+function cell(v, score, err) {
+  if (err) return `<span class="err">失敗</span>`;
+  if (!v) return "–";
+  return `<span class="${v}">${VERDICT_ZH[v]}</span>${score == null ? "" : ` · ${score}`}`;
+}
+
+function render() {
+  $("rows").innerHTML = cases.map(c => {
+    const r = results.find(x => x.case_id === c.id);
+    const note = c.missing.length ? `缺：${c.missing.join("、")}` : (r?.error_note || "");
+    return `<tr><td>${esc(c.id)}</td><td>${c.files.length}</td>
+      <td>${r ? cell(r.local_verdict, r.local_score, r.local_status !== "ok") : ""}</td>
+      <td>${r ? cell(r.claude_verdict, r.claude_score, r.claude_status !== "ok") : ""}</td>
+      <td>${r ? cell(r.hybrid_verdict, r.hybrid_score, r.hybrid_status !== "ok") : ""}</td>
+      <td class="muted">${esc(note)}</td></tr>`;
+  }).join("");
+}
+
+async function runCase(c) {
+  const r = { case_id: c.id, n_photos: c.files.length, parts: c.files.map(x => x.part).join("|"), tested_at: new Date().toISOString(),
+    local_status: "skipped", claude_status: "skipped", hybrid_status: "skipped", error_note: "" };
+  if (c.missing.length) { r.error_note = "缺少必拍部位：" + c.missing.join("、"); return r; }
+  let photos;
+  try { photos = await compressForUpload(c.files.map(x => x.f)); }
+  catch (e) { r.error_note = "照片壓縮失敗：" + (e.i18nKey || e.message); return r; }
+  const parts = c.files.map(x => x.part);
+  const [lr, cr] = await Promise.allSettled([
+    runLocalModel(photos),
+    AI_INSPECT_URL && user ? user.getIdToken().then(tk => runAiInspection(photos, parts, tk)) : Promise.reject(new Error("未登入或未設定服務網址")),
+  ]);
+  const local = lr.status === "fulfilled" ? lr.value : null;
+  const claude = cr.status === "fulfilled" ? cr.value : null;
+  const notes = [];
+  if (local) {
+    r.local_status = "ok"; r.local_score = local.score; r.local_verdict = local.score >= PASS_SCORE ? "pass" : "fail";
+    r.local_top = local.topClass; r.local_conf = +local.confidence.toFixed(4);
+  } else { r.local_status = "error"; notes.push("自建模型：" + (lr.reason?.message || "沒有模型")); }
+  if (claude) {
+    r.claude_status = "ok"; r.claude_score = claude.score; r.claude_verdict = claude.verdict;
+  } else { r.claude_status = "error"; notes.push("Claude：" + (cr.reason?.message || "無結果")); }
+  const hy = combineResults(local, claude);
+  if (hy) { r.hybrid_status = "ok"; r.hybrid_verdict = hy.verdict; r.hybrid_score = hy.score; r.hybrid_rule = hy.reasonKey || "claude_only"; }
+  else r.hybrid_status = "error";
+  r.error_note = notes.join("；");
+  r.raw = { local, claude }; // 原始輸出，供追溯
+  return r;
+}
+
+$("run").onclick = async () => {
+  $("run").disabled = true;
+  results = [];
+  for (const [i, c] of cases.entries()) {
+    $("status").textContent = `測試中 ${i + 1} / ${cases.length}（${c.id}）`;
+    results.push(await runCase(c));
+    render();
+  }
+  $("status").textContent = `完成 ${results.length} 件`;
+  refresh();
+};
+
+const COLS = ["case_id", "n_photos", "parts", "tested_at", "local_status", "local_verdict", "local_score", "local_top", "local_conf",
+  "claude_status", "claude_verdict", "claude_score", "hybrid_status", "hybrid_verdict", "hybrid_score", "hybrid_rule", "error_note"];
+const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+function download(name, text, type) {
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+  a.click();
+}
+$("export").onclick = () => {
+  download("case_results.csv", "﻿" + [COLS.join(",")].concat(results.map(r => COLS.map(c => csvCell(r[c])).join(","))).join("\r\n"), "text/csv");
+  setTimeout(() => download("case_results.json", JSON.stringify(results, null, 2), "application/json"), 300);
+};
+</script>
+</body>
+</html>
