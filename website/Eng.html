@@ -62,10 +62,14 @@
                 <div class="auth-logo">🚲</div>
                 <h2>NCU Green Love Bikes</h2>
                 <p class="auth-sub" data-i18n="login_sub">中大愛心綠色腳踏車</p>
+                <p class="school-note" data-i18n="login_school_note">🎓 僅限中央大學師生，使用學號登入</p>
                 <form onsubmit="handleLogin(event)" novalidate>
                     <div class="input-group">
                         <label for="loginId" data-i18n="id_label">學號 / 帳號</label>
-                        <input type="text" id="loginId" autocomplete="username" data-i18n-ph="id_ph" required>
+                        <div class="email-input">
+                            <input type="text" id="loginId" autocomplete="username" autocapitalize="off" spellcheck="false" data-i18n-ph="id_ph" required>
+                            <span class="email-suffix">@g.ncu.edu.tw</span>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label for="loginPwd" data-i18n="pwd_label">密碼</label>
@@ -83,10 +87,14 @@
         <section id="registerSection" class="view-section auth-screen">
             <div class="auth-card">
                 <h2 data-i18n="reg_title">📝 新增學生帳號</h2>
+                <p class="school-note" data-i18n="reg_school_note">註冊後會寄驗證信到你的中央大學信箱，完成驗證才能使用</p>
                 <form onsubmit="handleRegister(event)" novalidate>
                     <div class="input-group">
                         <label for="regId" data-i18n="reg_id_label">設定學號</label>
-                        <input type="text" id="regId" autocomplete="username" data-i18n-ph="reg_id_ph" required>
+                        <div class="email-input">
+                            <input type="text" id="regId" autocomplete="username" autocapitalize="off" spellcheck="false" data-i18n-ph="reg_id_ph" required>
+                            <span class="email-suffix">@g.ncu.edu.tw</span>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label for="regPwd" data-i18n="reg_pwd_label">設定密碼</label>
@@ -100,6 +108,24 @@
                     <button type="submit" class="btn btn-accent" data-i18n="reg_btn">立即開通帳號</button>
                 </form>
                 <a class="link-text" href="#login" data-i18n="back_login">返回登入</a>
+            </div>
+        </section>
+
+        <!-- ==================== 驗證學校信箱 ==================== -->
+        <section id="verifySection" class="view-section auth-screen">
+            <div class="auth-card">
+                <div class="auth-logo">📧</div>
+                <h2 data-i18n="verify_title">驗證學校信箱</h2>
+                <p class="verify-desc"><span data-i18n="verify_desc">我們已寄出驗證信到</span><br><strong id="verifyEmail"></strong></p>
+                <ol class="verify-steps">
+                    <li data-i18n="verify_step1">登入中央大學信箱，打開驗證信</li>
+                    <li data-i18n="verify_step2">點選信中的驗證連結</li>
+                    <li data-i18n="verify_step3">回到這裡，按下「我已完成驗證」</li>
+                </ol>
+                <button type="button" class="btn btn-primary" onclick="checkVerified(this)" data-i18n="verify_done_btn">我已完成驗證</button>
+                <button type="button" class="btn btn-ghost" onclick="resendVerification(this)" data-i18n="verify_resend_btn">重新寄送驗證信</button>
+                <p class="muted small" data-i18n="verify_spam">沒收到嗎？請檢查垃圾郵件匣。</p>
+                <button type="button" class="link-text" onclick="useOtherAccount()" data-i18n="verify_other">使用其他帳號</button>
             </div>
         </section>
 

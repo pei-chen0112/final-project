@@ -169,7 +169,7 @@ function corsHeaders(origin: string, allowed: string[]): Record<string, string> 
     };
 }
 
-// 用 Firebase 驗證登入狀態：只有登入的學生能呼叫，避免 API 額度被別人用掉
+// 用 Firebase 驗證登入狀態：只有已驗證中央大學信箱的學生能呼叫，避免 API 額度被別人用掉
 async function verifyFirebaseUser(idToken: string, apiKey: string): Promise<string | null> {
     const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
         method: "POST",
@@ -177,9 +177,14 @@ async function verifyFirebaseUser(idToken: string, apiKey: string): Promise<stri
         body: JSON.stringify({ idToken }),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { users?: { localId: string }[] };
-    return data.users?.[0]?.localId ?? null;
+    const data = (await res.json()) as { users?: { localId: string; email?: string; emailVerified?: boolean }[] };
+    const user = data.users?.[0];
+    // 只接受已驗證的中央大學信箱帳號
+    if (!user || !user.emailVerified || !String(user.email ?? "").toLowerCase().endsWith(SCHOOL_EMAIL_DOMAIN)) return null;
+    return user.localId;
 }
+
+const SCHOOL_EMAIL_DOMAIN = "@g.ncu.edu.tw"; // 中央大學 Google 信箱
 
 const PHOTO_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
 // 網站送來的部位代號 → 給 Claude 看的說明

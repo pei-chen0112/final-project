@@ -571,6 +571,41 @@ body[data-view="mapSection"] .ride-pill { display: none; }
 .auth-card h2 { margin: 0; color: var(--brand); font-size: 22px; }
 .auth-sub { margin: 4px 0 24px; font-size: 13px; color: var(--muted); }
 .auth-card form { margin-top: 20px; }
+.school-note {
+    margin: -10px 0 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border-radius: 10px;
+}
+/* 帳號欄：後面固定顯示 @g.ncu.edu.tw */
+.email-input {
+    display: flex;
+    align-items: stretch;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.email-input:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 20%, transparent); }
+.input-group .email-input input { flex: 1; min-width: 0; border: none; border-radius: 0; background: transparent; box-shadow: none !important; }
+.email-suffix {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--muted);
+    background: var(--border);
+}
+.verify-desc { margin: 12px 0 10px; font-size: 14px; color: var(--muted); }
+.verify-desc strong { color: var(--text); font-size: 16px; word-break: break-all; }
+.verify-steps { margin: 0 0 8px; padding-left: 22px; text-align: left; font-size: 14px; line-height: 1.9; }
+body[data-view="verifySection"] .dock { display: none; }
 
 /* ==================== 6. 一般內頁 ==================== */
 .page { max-width: 640px; margin: 0 auto; padding: 24px 24px 60px calc(var(--dock-w) + 24px); }

@@ -4,7 +4,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider
+    onAuthStateChanged, updatePassword, reauthenticateWithCredential, EmailAuthProvider,
+    sendEmailVerification, sendPasswordResetEmail, reload as reloadUser
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, collection, query, where, orderBy, limit,
@@ -40,7 +41,10 @@ const db = getFirestore(app);
 // ==========================================
 // ⚙️ 2. 系統設定
 // ==========================================
-const EMAIL_DOMAIN = "@ncu.edu.tw";           // 以「學號@ncu.edu.tw」作為 Firebase 帳號
+// 只有中央大學的人能登入：帳號是中央大學 Google 信箱（例如 dkchan@g.ncu.edu.tw），必須點驗證信才能使用
+const EMAIL_DOMAIN = "@g.ncu.edu.tw";
+const ACCOUNT_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$/; // @ 前面的帳號：1–64 個英數字、. - _
+const RESEND_COOLDOWN_MS = 60000;               // 重新寄送驗證信的間隔
 const ADMIN_ID = "admin", ADMIN_PWD = "admin123"; // 技師後台登入（展示用）
 const RIDE_FEE = 5;                            // 單次騎乘費用
 const APPROVE_BONUS = 50;                      // 回收車輛上架獎勵
@@ -75,7 +79,8 @@ const DEFAULT_BIKES = {
 const state = {
     lang: "zh",
     route: "home",
-    user: null,          // 目前登入的學號
+    user: null,          // 目前登入的學號（已驗證學校信箱）
+    unverified: null,    // 已註冊但還沒點驗證信的 Firebase 使用者
     isAdmin: false,
     userDoc: null,       // users/{學號} 即時資料
     myApps: [],
@@ -308,7 +313,8 @@ function toggleTheme() {
 // ==========================================
 const ROUTES = {
     home: "mainMenuSection", login: "loginSection", register: "registerSection", map: "mapSection",
-    member: "memberSection", upload: "uploadBikeSection", repair: "repairSection", carbon: "carbonSection", admin: "adminSection"
+    member: "memberSection", upload: "uploadBikeSection", repair: "repairSection", carbon: "carbonSection", admin: "adminSection",
+    verify: "verifySection"
 };
 const VIEW_TO_ROUTE = Object.fromEntries(Object.entries(ROUTES).map(([r, v]) => [v, r]));
 const PROTECTED = new Set(["member", "upload", "repair", "carbon"]);
@@ -326,9 +332,11 @@ function go(route) {
 function showRoute(route) {
     if (!authReady) return;
     if (route === "admin" && !state.isAdmin) { toast(t("need_login"), "warn"); return go("login"); }
+    if (route === "verify" && !state.unverified) return go(state.user ? "home" : "login");
     if (PROTECTED.has(route) && !state.user) {
         if (state.isAdmin) return go("admin");
         pendingRoute = route;
+        if (state.unverified) return go("verify"); // 已註冊但還沒驗證學校信箱
         toast(t("need_login"), "warn");
         return go("login");
     }
@@ -412,8 +420,31 @@ function setSessionUser(fbUser) {
     updateRideUI();
 }
 
-onAuthStateChanged(auth, (fbUser) => {
-    setSessionUser(fbUser);
+const isSchoolEmail = (email) => String(email || "").toLowerCase().endsWith(EMAIL_DOMAIN);
+
+// 把使用者輸入轉成學校信箱：接受「dkchan」或完整的「dkchan@g.ncu.edu.tw」，其他網域一律拒絕
+function parseSchoolAccount(input) {
+    let account = String(input || "").trim().toLowerCase();
+    if (account.includes("@")) {
+        if (!account.endsWith(EMAIL_DOMAIN)) return { error: "err_email_domain" };
+        account = account.slice(0, -EMAIL_DOMAIN.length);
+    }
+    if (!ACCOUNT_RE.test(account)) return { error: "err_id_format" };
+    return { id: account, email: account + EMAIL_DOMAIN };
+}
+const setAuthLanguage = () => { auth.languageCode = state.lang === "zh" ? "zh-TW" : "en"; };
+
+onAuthStateChanged(auth, async (fbUser) => {
+    // 只接受中央大學信箱帳號；舊版帳號（學號@ncu.edu.tw）自動登出，請使用者用學號重新註冊
+    if (fbUser && !isSchoolEmail(fbUser.email)) {
+        await signOut(auth);
+        toast(t("err_old_account"), "warn", 8000);
+        return; // 登出後會再觸發一次（fbUser = null）
+    }
+    // 還沒點驗證信的帳號不算登入，只能停在「驗證學校信箱」頁
+    state.unverified = fbUser && !fbUser.emailVerified ? fbUser : null;
+    setSessionUser(fbUser && fbUser.emailVerified ? fbUser : null);
+    renderVerify();
     if (!authReady) {
         authReady = true;
         showRoute(currentRoute());
@@ -426,14 +457,14 @@ onAuthStateChanged(auth, (fbUser) => {
 
 async function handleLogin(event) {
     event.preventDefault();
-    const id = $("loginId").value.trim();
+    const raw = $("loginId").value.trim();
     const pwd = $("loginPwd").value;
     const errEl = $("loginError");
     errEl.hidden = true;
-    if (!id || !pwd) return showFormError(errEl, t("err_empty"));
+    if (!raw || !pwd) return showFormError(errEl, t("err_empty"));
 
     // 技師後台登入（不經過 Firebase）
-    if (id === ADMIN_ID && pwd === ADMIN_PWD) {
+    if (raw === ADMIN_ID && pwd === ADMIN_PWD) {
         if (auth.currentUser) await signOut(auth);
         setSessionUser(null);
         state.isAdmin = true;
@@ -446,16 +477,27 @@ async function handleLogin(event) {
         return go("admin");
     }
 
+    const parsed = parseSchoolAccount(raw);
+    if (parsed.error) return showFormError(errEl, t(parsed.error));
+    const id = parsed.id;
+
     const btn = event.submitter || event.target.querySelector("button[type=submit]");
     await withBusy(btn, async () => {
         try {
             pendingLoginId = id;
-            const cred = await signInWithEmailAndPassword(auth, id + EMAIL_DOMAIN, pwd);
+            const cred = await signInWithEmailAndPassword(auth, parsed.email, pwd);
             rememberId(cred.user.uid, id);
             exitAdmin();
+            $("loginPwd").value = "";
+            if (!cred.user.emailVerified) {
+                // 密碼正確但還沒驗證學校信箱：先到驗證頁
+                state.unverified = cred.user;
+                setSessionUser(null);
+                renderVerify();
+                return go("verify");
+            }
             setSessionUser(cred.user);
             $("loginId").value = "";
-            $("loginPwd").value = "";
             toast(t("login_welcome", { id }), "success");
             const target = pendingRoute || "home";
             pendingRoute = null;
@@ -470,12 +512,13 @@ async function handleLogin(event) {
 
 async function handleRegister(event) {
     event.preventDefault();
-    const id = $("regId").value.trim();
+    const parsed = parseSchoolAccount($("regId").value);
     const pwd = $("regPwd").value;
     const pwd2 = $("regPwd2").value;
     const errEl = $("regError");
     errEl.hidden = true;
-    if (!/^[A-Za-z0-9_-]{3,20}$/.test(id)) return showFormError(errEl, t("err_id_format"));
+    if (parsed.error) return showFormError(errEl, t(parsed.error));
+    const id = parsed.id;
     if (pwd.length < 6) return showFormError(errEl, t("err_pwd_short"));
     if (pwd !== pwd2) return showFormError(errEl, t("err_pwd_mismatch"));
 
@@ -483,18 +526,21 @@ async function handleRegister(event) {
     await withBusy(btn, async () => {
         try {
             pendingLoginId = id;
-            // 1. 建立 Firebase 帳號（建立後會自動登入）
-            const cred = await createUserWithEmailAndPassword(auth, id + EMAIL_DOMAIN, pwd);
+            // 1. 用學校信箱建立 Firebase 帳號
+            const cred = await createUserWithEmailAndPassword(auth, parsed.email, pwd);
             rememberId(cred.user.uid, id);
-            // 2. 在 Firestore 建立該學生的專屬資料文件：users(集合) -> 學號(文件)
-            await setDoc(doc(db, "users", id), newUserData(id));
+            // 2. 寄驗證信到學校信箱；驗證完成第一次登入時才建立 users/{學號} 資料
+            //    （同學號的舊資料，例如儲值金，會沿用不會被覆蓋）
+            setAuthLanguage();
+            await sendEmailVerification(cred.user);
+            resendCooldownUntil = Date.now() + RESEND_COOLDOWN_MS;
             exitAdmin();
-            setSessionUser(cred.user);
+            state.unverified = cred.user;
+            setSessionUser(null);
+            renderVerify();
             ["regId", "regPwd", "regPwd2"].forEach(k => { $(k).value = ""; });
-            toast(t("alt_reg_ok"), "success");
-            const target = pendingRoute || "home";
-            pendingRoute = null;
-            go(target);
+            toast(t("alt_reg_ok"), "success", 6000);
+            go("verify");
         } catch (e) {
             showFormError(errEl, authErrMsg(e));
         } finally {
@@ -542,8 +588,82 @@ async function switchAccount() {
     go("login");
 }
 
+// ---------- 驗證學校信箱 ----------
+let resendCooldownUntil = 0;
+
+function renderVerify() {
+    if (!state.unverified) return;
+    $("verifyEmail").textContent = state.unverified.email;
+}
+
+async function checkVerified(btn) {
+    if (!state.unverified) return go("login");
+    await withBusy(btn, async () => {
+        try {
+            await reloadUser(state.unverified);
+        } catch (e) {
+            return toast(authErrMsg(e), "error");
+        }
+        const user = auth.currentUser;
+        if (!user || !user.emailVerified) return toast(t("verify_not_yet"), "warn", 5000);
+        await user.getIdToken(true); // 更新登入權杖，讓 AI 檢測服務看到「已驗證」
+        state.unverified = null;
+        setSessionUser(user);
+        toast(t("verify_ok"), "success");
+        const target = pendingRoute || "home";
+        pendingRoute = null;
+        go(target);
+    });
+}
+
+async function resendVerification(btn) {
+    if (!state.unverified) return go("login");
+    const wait = Math.ceil((resendCooldownUntil - Date.now()) / 1000);
+    if (wait > 0) return toast(t("verify_wait", { s: wait }), "warn");
+    await withBusy(btn, async () => {
+        try {
+            setAuthLanguage();
+            await sendEmailVerification(state.unverified);
+            resendCooldownUntil = Date.now() + RESEND_COOLDOWN_MS;
+            toast(t("verify_sent"), "success");
+        } catch (e) {
+            toast(authErrMsg(e), "error");
+        }
+    });
+}
+
+async function useOtherAccount() {
+    state.unverified = null;
+    if (auth.currentUser) await signOut(auth);
+    go("login");
+}
+
+// 忘記密碼：寄重設密碼信到學校信箱
 function showForgotPassword() {
-    openModal({ title: t("forget_title"), html: `<p>${t("alt_forget")}</p>`, actions: [{ label: t("ok") }] });
+    openModal({
+        title: t("forget_title"),
+        html: `<p>${t("forget_desc")}</p>
+            <div class="input-group"><label for="forgetId">${t("reg_id_label")}</label>
+            <div class="email-input"><input id="forgetId" autocomplete="username" value="${esc($("loginId").value.trim())}" placeholder="${esc(t("reg_id_ph"))}"><span class="email-suffix">${EMAIL_DOMAIN}</span></div></div>`,
+        actions: [
+            { label: t("cancel_btn"), cls: "btn-ghost", value: null },
+            {
+                label: t("forget_send"),
+                onClick: async (m) => {
+                    const parsed = parseSchoolAccount(m.querySelector("#forgetId").value);
+                    if (parsed.error) throw new AppError(parsed.error);
+                    setAuthLanguage();
+                    try {
+                        await sendPasswordResetEmail(auth, parsed.email);
+                    } catch (e) {
+                        // 不透露帳號是否存在，避免被用來查詢帳號
+                        if (e.code !== "auth/user-not-found") throw e;
+                    }
+                    toast(t("forget_sent", { email: parsed.email }), "success", 8000);
+                }
+            }
+        ]
+    });
 }
 
 // ---------- 右上角使用者選單 ----------
@@ -1901,6 +2021,7 @@ setInterval(() => {
 Object.assign(window, {
     go, t, switchView, changeLang, toggleTheme, scrollToStory,
     handleLogin, handleRegister, logout, switchAccount, toggleUserDropdown, showForgotPassword,
+    checkVerified, resendVerification, useOtherAccount,
     enterMap, enterMemberPage, enterRepairPage, enterCarbonPage,
     openLinePayMock, redeemPromoCode, changePassword,
     previewPhoto, confirmBikeUpload, submitRepair, previewRepairPhotos,
